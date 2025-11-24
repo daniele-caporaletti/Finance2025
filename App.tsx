@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { fetchTransactions, deleteTransaction } from './services/api';
-import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple, PeriodType } from './types';
+import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple } from './types';
 import { Filters } from './components/Filters';
 import { KPICards } from './components/KPICards';
 import { TransactionTable } from './components/TransactionTable';
@@ -9,9 +9,21 @@ import { ManagementPanel } from './components/ManagementPanel';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { KPIDetailView, DetailType } from './components/KPIDetailView';
 import { TagStats } from './components/TagStats';
-import { Loader2, Plus, LayoutDashboard } from 'lucide-react';
+import { LoginScreen } from './components/LoginScreen';
+import { Loader2, Plus, LayoutDashboard, LogOut } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
+
+// Fix: Add google to the Window interface to avoid TypeScript error 'Property 'google' does not exist on type 'Window''.
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 const App: React.FC = () => {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
+  const [user, setUser] = useState<any | null>(null);
+
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,29 +47,63 @@ const App: React.FC = () => {
     eventTag: 'ALL'
   });
 
-  const loadData = async () => {
+  const loadData = async (accessToken: string) => {
     try {
       setLoading(true);
-      const data = await fetchTransactions();
+      const data = await fetchTransactions(accessToken);
       const data2025 = data.filter(t => new Date(t.date).getFullYear() === 2025);
       setRawData(data2025);
       setError(null);
     } catch (err) {
-      setError("Impossibile caricare i dati. L'API potrebbe essere offline. Riprova più tardi.");
+      setError("Impossibile caricare i dati. Assicurati di aver dato i permessi e che l'API sia online.");
+      // If auth error, log out
+      if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) {
+        handleLogout();
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (token) {
+      const decoded: any = jwtDecode(token);
+      if (decoded.exp * 1000 > Date.now()) {
+        setUser({ name: decoded.name, picture: decoded.picture });
+        loadData(token);
+      } else {
+        handleLogout();
+      }
+    } else {
+        setLoading(false);
+    }
+  }, [token]);
+
+  const handleLoginSuccess = (response: any) => {
+    const credential = response.credential;
+    const decoded: any = jwtDecode(credential);
+    setToken(credential);
+    setUser({ name: decoded.name, picture: decoded.picture });
+    localStorage.setItem('authToken', credential);
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    setRawData([]);
+    localStorage.removeItem('authToken');
+    if (window.google) {
+        // Fix: Use window.google to access the google object, which is now typed globally.
+        window.google.accounts.id.disableAutoSelect();
+    }
+  };
 
   const handleDelete = async (id: number) => {
+    if (!token) return;
     try {
       setLoading(true);
-      await deleteTransaction(id);
-      await loadData();
+      await deleteTransaction(id, token);
+      await loadData(token);
     } catch (err) {
       setError("Errore durante l'eliminazione del movimento.");
       setLoading(false);
@@ -145,6 +191,10 @@ const App: React.FC = () => {
     });
   }, [rawData, filters]);
 
+  if (!token) {
+    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen pb-20">
       
@@ -161,6 +211,18 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            {user && (
+              <div className="flex items-center gap-3">
+                <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+                <button 
+                  onClick={handleLogout}
+                  className="p-2 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-full transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4"/>
+                </button>
+              </div>
+            )}
             <button 
               onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
               className="hidden md:flex items-center gap-2 bg-violet-600 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-violet-200 hover:bg-violet-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
@@ -227,7 +289,8 @@ const App: React.FC = () => {
                                   categories={categories}
                                   setCategories={setCategories}
                                   allTransactions={rawData}
-                                  onDataChange={loadData}
+                                  onDataChange={() => token && loadData(token)}
+                                  token={token}
                               />
                           </div>
                           <CategoryStats transactions={filteredTransactions} />
@@ -253,10 +316,11 @@ const App: React.FC = () => {
       <AddTransactionModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onSuccess={loadData}
+        onSuccess={() => token && loadData(token)}
         accounts={accounts}
         categories={categories}
         initialData={editingTransaction}
+        token={token}
       />
     </div>
   );

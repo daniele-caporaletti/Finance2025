@@ -5,8 +5,8 @@ interface LoginScreenProps {
   onLoginSuccess: (response: any) => void;
 }
 
-// DOVRAI SOSTITUIRE QUESTO CON IL TUO CLIENT ID
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+// Client ID provided by the user
+const GOOGLE_CLIENT_ID = '404363320124-ao14lmp11h4nbju4dobielebrd7tgms8.apps.googleusercontent.com';
 const isPlaceholderClientId = GOOGLE_CLIENT_ID.startsWith('YOUR_GOOGLE_CLIENT_ID');
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {

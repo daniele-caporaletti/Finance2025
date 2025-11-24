@@ -2,13 +2,13 @@ import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPa
 
 const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbwn0HQvpae92CTQau13v_rJ05MGiGjzXmztndndDUajGmBygkPIlNoLPrAlRExBDlIi/exec';
 
-const POST_HEADERS: HeadersInit = {
-  'Content-Type': 'text/plain;charset=utf-8',
-};
-
-export const fetchTransactions = async (): Promise<Transaction[]> => {
+export const fetchTransactions = async (accessToken: string): Promise<Transaction[]> => {
   try {
-    const response = await fetch(`${BASE_API_URL}?action=list`);
+    const response = await fetch(`${BASE_API_URL}?action=list`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      }
+    });
     if (!response.ok) {
       throw new Error(`Error fetching data: ${response.statusText}`);
     }
@@ -43,12 +43,15 @@ export const fetchExchangeRate = async (date: string, fromCurr: string): Promise
   }
 };
 
-export const createTransaction = async (payload: CreateTransactionPayload): Promise<void> => {
+export const createTransaction = async (payload: CreateTransactionPayload, accessToken: string): Promise<void> => {
   try {
     const response = await fetch(`${BASE_API_URL}?action=create`, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: POST_HEADERS,
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+        'Authorization': `Bearer ${accessToken}`,
+      },
     });
 
     if (!response.ok) {
@@ -65,12 +68,15 @@ export const createTransaction = async (payload: CreateTransactionPayload): Prom
   }
 };
 
-export const updateTransaction = async (payload: UpdateTransactionPayload): Promise<void> => {
+export const updateTransaction = async (payload: UpdateTransactionPayload, accessToken: string): Promise<void> => {
   try {
     const response = await fetch(`${BASE_API_URL}?action=update`, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: POST_HEADERS,
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+        'Authorization': `Bearer ${accessToken}`,
+      },
     });
 
     if (!response.ok) {
@@ -87,12 +93,15 @@ export const updateTransaction = async (payload: UpdateTransactionPayload): Prom
   }
 };
 
-export const deleteTransaction = async (id: number): Promise<void> => {
+export const deleteTransaction = async (id: number, accessToken: string): Promise<void> => {
   try {
     const response = await fetch(`${BASE_API_URL}?action=delete&id=${id}`, {
       method: 'POST',
       body: JSON.stringify({}), 
-      headers: POST_HEADERS,
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+        'Authorization': `Bearer ${accessToken}`,
+      },
     });
 
     if (!response.ok) {

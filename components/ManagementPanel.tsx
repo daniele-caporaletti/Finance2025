@@ -12,6 +12,7 @@ interface ManagementPanelProps {
   setCategories: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   allTransactions: Transaction[];
   onDataChange: () => void;
+  token: string | null;
 }
 
 export const ManagementPanel: React.FC<ManagementPanelProps> = ({
@@ -21,6 +22,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
   setCategories,
   allTransactions,
   onDataChange,
+  token
 }) => {
   const [activeTab, setActiveTab] = useState<'ACCOUNTS' | 'CATEGORIES'>('ACCOUNTS');
 
@@ -82,6 +84,10 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
   };
 
   const executeInitSave = async () => {
+      if (!token) {
+        setAlertMessage("Errore di autenticazione. Riprova il login.");
+        return;
+      }
       setIsInitializing(true);
       try {
           const promises = accounts.map(async ([name, curr]) => {
@@ -111,7 +117,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
                  note: 'Saldo Iniziale',
                  valueChf: valueChf
              };
-             await createTransaction(payload);
+             await createTransaction(payload, token);
           });
           await Promise.all(promises);
           setInitBalances({});
