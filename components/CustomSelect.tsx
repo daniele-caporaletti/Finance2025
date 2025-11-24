@@ -13,6 +13,7 @@ interface CustomSelectProps {
   icon?: React.ReactNode;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export const CustomSelect: React.FC<CustomSelectProps> = ({ 
@@ -21,7 +22,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   options, 
   icon, 
   placeholder,
-  className = ""
+  className = "",
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,22 +46,33 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     setIsOpen(false);
   };
 
+  const toggleOpen = () => {
+    if (!disabled) {
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
-    <div className={`relative ${className}`} ref={containerRef}>
+    <div className={`relative ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} ref={containerRef}>
       {/* Trigger Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full text-left flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 hover:border-violet-300 hover:bg-white rounded-2xl transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-violet-200 ${isOpen ? 'ring-2 ring-violet-200 border-violet-300 bg-white' : ''}`}
+        onClick={toggleOpen}
+        disabled={disabled}
+        className={`w-full text-left flex items-center justify-between px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl transition-all duration-200 group focus:outline-none 
+        ${disabled 
+            ? 'bg-slate-100 text-slate-400' 
+            : `hover:border-violet-300 hover:bg-white focus:ring-2 focus:ring-violet-200 ${isOpen ? 'ring-2 ring-violet-200 border-violet-300 bg-white' : ''}`
+        }`}
       >
         <div className="flex items-center gap-3 overflow-hidden">
           {icon && (
-            <div className={`text-slate-400 group-hover:text-violet-500 transition-colors ${isOpen ? 'text-violet-500' : ''}`}>
+            <div className={`text-slate-400 transition-colors ${!disabled && 'group-hover:text-violet-500'} ${isOpen ? 'text-violet-500' : ''}`}>
               {icon}
             </div>
           )}
-          <span className={`text-sm font-medium truncate ${selectedOption ? 'text-slate-700' : 'text-slate-400'}`}>
-            {selectedOption ? selectedOption.label : placeholder}
+          <span className={`text-sm font-medium truncate ${selectedOption && !disabled ? 'text-slate-700' : 'text-slate-400'}`}>
+            {selectedOption && !disabled ? selectedOption.label : placeholder}
           </span>
         </div>
         <ChevronDown 
@@ -68,7 +81,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       </button>
 
       {/* Dropdown Menu */}
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl max-h-64 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100 p-1.5">
           {options.map((option) => {
             const isSelected = String(option.value) === String(value);

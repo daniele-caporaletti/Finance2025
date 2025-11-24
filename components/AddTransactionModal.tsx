@@ -20,35 +20,44 @@ type Mode = 'SINGLE' | 'TRANSFER';
 type TransactionType = 'EXPENSE' | 'INCOME';
 
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose, onSuccess, accounts, categories, initialData, apiKey }) => {
+  // =========================================
+  // STATE
+  // =========================================
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Mode Switching
   const [mode, setMode] = useState<Mode>('SINGLE');
   const [transactionType, setTransactionType] = useState<TransactionType>('EXPENSE');
 
-  // Shared State
+  // Shared Fields
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
 
-  // Single Transaction State
+  // Single Transaction Fields
   const [account, setAccount] = useState('');
   const [category, setCategory] = useState('');
   const [subcategory, setSubcategory] = useState('');
-  const [amountValue, setAmountValue] = useState<string>(''); // Pure positive number string
+  const [amountValue, setAmountValue] = useState<string>(''); // Positive string input
   const [analytics, setAnalytics] = useState<'TRUE' | 'FALSE' | 'WORK'>('TRUE');
   const [flag, setFlag] = useState('');
 
-  // Transfer State
+  // Transfer Fields
   const [fromAccount, setFromAccount] = useState('');
   const [toAccount, setToAccount] = useState('');
   const [amountOut, setAmountOut] = useState<string>('');
   const [amountIn, setAmountIn] = useState<string>('');
 
-  // Options Helpers
+  // Dropdown Options Mappers
   const accountOptions = accounts.map(([acc, curr]) => ({ label: `${acc} (${curr})`, value: acc }));
   const categoryOptions = Object.keys(categories).map(cat => ({ label: cat, value: cat }));
   const subcategoryOptions = category ? (categories[category] || []).map(sub => ({ label: sub, value: sub })) : [];
 
-  // Initialization
+  // =========================================
+  // EFFECTS & INITIALIZATION
+  // =========================================
+  
+  // Reset or Populate on Open
   useEffect(() => {
     if (isOpen) {
         if (initialData) {
@@ -73,6 +82,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             // CREATE MODE
             setDate(new Date().toISOString().split('T')[0]);
             resetForms();
+            // Set defaults
             if (accounts.length > 0 && !account) {
                 setAccount(accounts[0][0]);
                 setFromAccount(accounts[0][0]);
@@ -85,12 +95,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
     }
   }, [isOpen, initialData, accounts, categories]);
 
-  // Derived Values
+  // Determine Currencies
   const currentCurrency = accounts.find(a => a[0] === account)?.[1] || 'CHF';
   const fromCurrency = accounts.find(a => a[0] === fromAccount)?.[1] || 'CHF';
   const toCurrency = accounts.find(a => a[0] === toAccount)?.[1] || 'CHF';
 
-  // Subcategory Update
+  // Auto-select first subcategory when category changes
   useEffect(() => {
     if (mode === 'SINGLE' && category && isOpen && !initialData) {
       const subs = categories[category] || [];
@@ -98,12 +108,16 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
     }
   }, [category, mode, categories, isOpen, initialData]);
 
-  // Transfer Currency Sync
+  // Auto-sync amounts for same-currency transfers
   useEffect(() => {
     if (mode === 'TRANSFER' && fromCurrency === toCurrency) {
       setAmountIn(amountOut);
     }
   }, [amountOut, fromCurrency, toCurrency, mode]);
+
+  // =========================================
+  // HANDLERS
+  // =========================================
 
   const calculateValueChf = async (amount: number, currency: string, dateStr: string): Promise<number> => {
     if (currency === 'CHF') return amount;
@@ -173,18 +187,18 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
       const numOut = Math.abs(parseFloat(amountOut));
       const numIn = Math.abs(parseFloat(amountIn));
 
+      // 1. Outflow Transaction (Negative)
       const outflowVal = -numOut;
       const outflowValueChf = await calculateValueChf(outflowVal, fromCurrency, date);
-      
       const payloadOut: CreateTransactionPayload = {
         date, account: fromAccount, category: 'TRANSFER', subcategory: '', curr: fromCurrency,
         movement: outflowVal, analytics: 'FALSE', flag: 'Transfer Out',
         note: note ? `To ${toAccount}: ${note}` : `Transfer to ${toAccount}`, valueChf: outflowValueChf
       };
 
+      // 2. Inflow Transaction (Positive)
       const inflowVal = numIn;
       const inflowValueChf = await calculateValueChf(inflowVal, toCurrency, date);
-
       const payloadIn: CreateTransactionPayload = {
         date, account: toAccount, category: 'TRANSFER', subcategory: '', curr: toCurrency,
         movement: inflowVal, analytics: 'FALSE', flag: 'Transfer In',

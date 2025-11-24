@@ -22,7 +22,7 @@ import {
   BarChart
 } from 'recharts';
 
-export type DetailType = 'BALANCE' | 'INCOME' | 'EXPENSE' | 'WORK' | 'TAG';
+export type DetailType = 'BALANCE' | 'INCOME' | 'EXPENSE' | 'WORK' | 'TAG' | 'TAGS_SUMMARY';
 
 interface KPIDetailViewProps {
   type: DetailType;
@@ -30,6 +30,7 @@ interface KPIDetailViewProps {
   year: number;
   tagName?: string | null; 
   onClose: () => void;
+  onTagSelect?: (tagName: string) => void;
   periodType: PeriodType;
   selectedMonth: number;
 }
@@ -67,7 +68,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions, year, tagName, onClose, periodType, selectedMonth }) => {
+export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions, year, tagName, onClose, onTagSelect, periodType, selectedMonth }) => {
   const [expandedMonth, setExpandedMonth] = useState<number | null>(
     periodType === 'MONTH' ? selectedMonth : null
   );
@@ -112,7 +113,24 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
       return { kind: 'TABLE', rows: monthlyData };
     } 
     
-    // --- CASE 2: TAG DETAILS (Category -> Subcategory) ---
+    // --- CASE 2: TAGS SUMMARY (List of all tags) ---
+    else if (type === 'TAGS_SUMMARY') {
+        const tags: Record<string, number> = {};
+        transactions.forEach(t => {
+            if (t.flag && t.flag.trim() !== '' && t.analytics !== 'FALSE') {
+                const tag = t.flag.trim();
+                tags[tag] = (tags[tag] || 0) + t.valueChf;
+            }
+        });
+
+        const sortedTags = Object.entries(tags)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+
+        return { kind: 'TAG_LIST', tags: sortedTags };
+    }
+
+    // --- CASE 3: TAG DETAILS (Category -> Subcategory) ---
     else if (type === 'TAG') {
         const catMap = new Map<string, Map<string, number>>();
 
@@ -154,7 +172,7 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
         return { kind: 'TAG_TREE', total: totalEvent, categories, chartData };
     }
 
-    // --- CASE 3: MONTHLY HIERARCHY (Month -> Category -> Subcategory) ---
+    // --- CASE 4: MONTHLY HIERARCHY (Month -> Category -> Subcategory) ---
     else {
       const tree = new Map<number, Map<string, Map<string, number>>>();
       const categoryTotals = new Map<string, number>(); // For Pie Chart
@@ -256,6 +274,7 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
         case 'EXPENSE': return { title: 'Dettaglio Uscite', subtitle: periodText, color: 'bg-rose-100 text-rose-800', icon: <TrendingDown className="w-6 h-6"/> };
         case 'INCOME': return { title: 'Dettaglio Entrate', subtitle: periodText, color: 'bg-emerald-100 text-emerald-800', icon: <TrendingUp className="w-6 h-6"/> };
         case 'WORK': return { title: 'Dettaglio Lavoro', subtitle: periodText, color: 'bg-indigo-100 text-indigo-800', icon: <Briefcase className="w-6 h-6"/> };
+        case 'TAGS_SUMMARY': return { title: 'Tutti gli Eventi', subtitle: periodText, color: 'bg-orange-100 text-orange-800', icon: <Tag className="w-6 h-6"/> };
         case 'TAG': return { title: `Evento: ${tagName}`, subtitle: `Analisi Evento - ${periodText}`, color: 'bg-orange-100 text-orange-800', icon: <Tag className="w-6 h-6"/> };
         default: return { title: 'Dettaglio', subtitle: periodText, color: 'bg-slate-100', icon: null };
     }
@@ -277,6 +296,14 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
                 <ArrowLeft className="w-4 h-4"/>
                 Torna alla Dashboard
             </button>
+            {type === 'TAG' && (
+                <button
+                    onClick={() => onTagSelect && onTagSelect('')} // Reset to list
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-full font-bold transition-all text-xs uppercase"
+                >
+                    Tutti gli Eventi
+                </button>
+            )}
         </div>
 
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col min-h-[600px]">
@@ -434,6 +461,39 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {/* --- VIEW: TAG LIST (SUMMARY) --- */}
+                {data.kind === 'TAG_LIST' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {data.tags.length === 0 && (
+                            <div className="col-span-full text-center p-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                                <p className="text-slate-400 font-medium">Nessun evento trovato nel periodo selezionato.</p>
+                            </div>
+                        )}
+                        {data.tags.map(tag => (
+                            <button
+                                key={tag.name}
+                                onClick={() => onTagSelect && onTagSelect(tag.name)}
+                                className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-orange-200 hover:bg-orange-50 hover:shadow-md transition-all group"
+                            >
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-white group-hover:shadow-sm transition-all border border-orange-100">
+                                        {tag.name.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <span className="font-bold text-slate-700 text-base truncate">{tag.name}</span>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <span className={`font-bold ${tag.value < 0 ? 'text-slate-600' : 'text-emerald-600'}`}>
+                                        {formatMoney(tag.value)}
+                                    </span>
+                                    <div className="bg-slate-50 p-1.5 rounded-lg group-hover:bg-white transition-colors">
+                                         <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-orange-400" />
+                                    </div>
+                                </div>
+                            </button>
+                        ))}
                     </div>
                 )}
 

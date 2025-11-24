@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Transaction, PeriodType } from '../types';
-import { Wallet, TrendingDown, TrendingUp, Briefcase, Info, X } from 'lucide-react';
+import { Wallet, TrendingDown, TrendingUp, Briefcase, Info, X, Tag } from 'lucide-react';
 import { DetailType } from './KPIDetailView';
 
 interface KPICardsProps {
@@ -23,10 +23,17 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
     let income = 0;
     let expenses = 0;
     let work = 0;
+    let events = 0;
 
     periodTransactions.forEach(t => {
       const val = t.valueChf;
       
+      // Events/Tags (Sum of all tagged transactions, regardless of analytics type usually, or following filtering?)
+      // Assuming we sum everything that has a tag for the "Eventi" KPI
+      if (t.flag && t.flag.trim() !== '' && t.analytics !== 'FALSE') {
+          events += val;
+      }
+
       // Work KPI
       if (t.analytics === 'WORK') {
         work += val;
@@ -41,7 +48,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
       }
     });
 
-    return { income, expenses, work, totalBalance };
+    return { income, expenses, work, totalBalance, events };
   }, [periodTransactions, balanceTransactions]);
 
   const formatCHF = (num: number) => {
@@ -68,16 +75,17 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
     onCardClick(type);
   };
 
-  // Dynamic Label Suffix
+  // Dynamic Label Suffixes
   const suffix = periodType === 'MONTH' ? 'MESE' : 'TOTALI';
+  const eventsSuffix = periodType === 'MONTH' ? 'MENSILI' : 'TOTALI';
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
       
-      {/* Saldo Totale (Primary - Purple/Blue) */}
+      {/* Saldo Totale (Primary - Purple/Blue) - Spans 2 cols on mobile if needed, or 1 */}
       <div 
         onClick={() => handleToggle('BALANCE')}
-        className={`${getCardClasses('BALANCE', 'bg-violet-100', 'ring-violet-300')} col-span-2 lg:col-span-1`}
+        className={`${getCardClasses('BALANCE', 'bg-violet-100', 'ring-violet-300')} col-span-2 md:col-span-1 lg:col-span-1`}
       >
         <div className="absolute -right-4 -bottom-4 opacity-10">
             <Wallet className="w-32 h-32 text-violet-900" />
@@ -91,14 +99,14 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
             <div className="p-1.5 sm:p-2 bg-white/60 rounded-full text-violet-700">
                 <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="text-[10px] sm:text-sm font-bold text-violet-900 uppercase tracking-wide opacity-70">Saldo Attuale</span>
+            <span className="text-[10px] sm:text-xs font-bold text-violet-900 uppercase tracking-wide opacity-70">Saldo Attuale</span>
         </div>
-        <h3 className="text-2xl sm:text-3xl font-bold text-violet-950 z-10">
+        <h3 className="text-2xl sm:text-2xl font-bold text-violet-950 z-10 truncate">
           {formatCHF(stats.totalBalance)}
         </h3>
       </div>
 
-      {/* Uscite (Error Container - Red/Rose) */}
+      {/* Uscite */}
       <div 
         onClick={() => handleToggle('EXPENSE')}
         className={getCardClasses('EXPENSE', 'bg-rose-100', 'ring-rose-300')}
@@ -115,14 +123,14 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
             <div className="p-1.5 sm:p-2 bg-white/60 rounded-full text-rose-700">
                 <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="text-[10px] sm:text-sm font-bold text-rose-900 uppercase tracking-wide opacity-70">Uscite {suffix}</span>
+            <span className="text-[10px] sm:text-xs font-bold text-rose-900 uppercase tracking-wide opacity-70">Uscite {suffix}</span>
         </div>
-        <h3 className="text-xl sm:text-3xl font-bold text-rose-950 z-10">
+        <h3 className="text-xl sm:text-2xl font-bold text-rose-950 z-10 truncate">
           {formatCHF(stats.expenses)}
         </h3>
       </div>
 
-      {/* Entrate (Success Container - Green/Emerald) */}
+      {/* Entrate */}
       <div 
         onClick={() => handleToggle('INCOME')}
         className={getCardClasses('INCOME', 'bg-emerald-100', 'ring-emerald-300')}
@@ -139,14 +147,14 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
             <div className="p-1.5 sm:p-2 bg-white/60 rounded-full text-emerald-700">
                 <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="text-[10px] sm:text-sm font-bold text-emerald-900 uppercase tracking-wide opacity-70">Entrate {suffix}</span>
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-900 uppercase tracking-wide opacity-70">Entrate {suffix}</span>
         </div>
-        <h3 className="text-xl sm:text-3xl font-bold text-emerald-950 z-10">
+        <h3 className="text-xl sm:text-2xl font-bold text-emerald-950 z-10 truncate">
           +{formatCHF(stats.income)}
         </h3>
       </div>
 
-      {/* Lavoro (Tertiary Container - Indigo/Blue) */}
+      {/* Lavoro */}
       <div 
         onClick={() => handleToggle('WORK')}
         className={getCardClasses('WORK', 'bg-indigo-50 border border-indigo-100', 'ring-indigo-200')}
@@ -163,10 +171,34 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
             <div className="p-1.5 sm:p-2 bg-white rounded-full text-indigo-600 shadow-sm">
                 <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="text-[10px] sm:text-sm font-bold text-indigo-900 uppercase tracking-wide opacity-70">Lavoro {suffix}</span>
+            <span className="text-[10px] sm:text-xs font-bold text-indigo-900 uppercase tracking-wide opacity-70">Lavoro {suffix}</span>
         </div>
-        <h3 className={`text-xl sm:text-3xl font-bold z-10 ${stats.work >= 0 ? 'text-indigo-900' : 'text-indigo-900'}`}>
+        <h3 className={`text-xl sm:text-2xl font-bold z-10 truncate ${stats.work >= 0 ? 'text-indigo-900' : 'text-indigo-900'}`}>
           {stats.work > 0 ? '+' : ''}{formatCHF(stats.work)}
+        </h3>
+      </div>
+
+       {/* Eventi & Tag (New) */}
+       <div 
+        onClick={() => handleToggle('TAGS_SUMMARY')}
+        className={getCardClasses('TAGS_SUMMARY', 'bg-orange-50 border border-orange-100', 'ring-orange-200')}
+      >
+         <div className="absolute -right-4 -bottom-4 opacity-5">
+            <Tag className="w-32 h-32 text-orange-900" />
+        </div>
+        <div className={`absolute top-4 right-4 transition-all duration-300 ${activeView === 'TAGS_SUMMARY' ? 'opacity-100 scale-100' : 'opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100'}`}>
+             <div className="bg-white/50 p-1.5 rounded-full text-orange-700">
+                {activeView === 'TAGS_SUMMARY' ? <X className="w-3 h-3 sm:w-4 sm:h-4" /> : <Info className="w-3 h-3 sm:w-4 sm:h-4" />}
+             </div>
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+            <div className="p-1.5 sm:p-2 bg-white rounded-full text-orange-600 shadow-sm">
+                <Tag className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <span className="text-[10px] sm:text-xs font-bold text-orange-900 uppercase tracking-wide opacity-70">Eventi {eventsSuffix}</span>
+        </div>
+        <h3 className={`text-xl sm:text-2xl font-bold z-10 truncate ${stats.events >= 0 ? 'text-orange-900' : 'text-orange-900'}`}>
+          {formatCHF(stats.events)}
         </h3>
       </div>
 

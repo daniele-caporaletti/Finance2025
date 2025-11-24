@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { fetchTransactions, deleteTransaction } from './services/api';
 import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple } from './types';
+
+// Components
 import { Filters } from './components/Filters';
 import { KPICards } from './components/KPICards';
 import { TransactionTable } from './components/TransactionTable';
@@ -8,30 +10,40 @@ import { CategoryStats } from './components/CategoryStats';
 import { ManagementPanel } from './components/ManagementPanel';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { KPIDetailView, DetailType } from './components/KPIDetailView';
-import { TagStats } from './components/TagStats';
 import { LoginScreen } from './components/LoginScreen';
-import { Loader2, Plus, LayoutDashboard, LogOut, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { CustomSelect } from './components/CustomSelect';
+
+// Icons & Utils
+import { Loader2, Plus, LayoutDashboard, LogOut, SlidersHorizontal, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+
+const MONTHS = [
+  "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+];
 
 const App: React.FC = () => {
-  // Store API Key instead of JWT token
+  // =========================================
+  // STATE MANAGEMENT
+  // =========================================
+  
+  // Auth & Data
   const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('finance_apikey'));
-
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  
-  const [activeView, setActiveView] = useState<DetailType | null>(null);
-  const [selectedTagDetail, setSelectedTagDetail] = useState<string | null>(null);
-
-  // Mobile state for widget visibility
-  const [showWidgetsMobile, setShowWidgetsMobile] = useState(false);
-
+  // Settings (Accounts/Categories)
   const [accounts, setAccounts] = useState<AccountTuple[]>(INITIAL_ACCOUNTS);
   const [categories, setCategories] = useState<Record<string, string[]>>(INITIAL_CATEGORIES);
 
+  // UI State (Modals, Views)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [activeView, setActiveView] = useState<DetailType | null>(null);
+  const [selectedTagDetail, setSelectedTagDetail] = useState<string | null>(null);
+  const [showWidgetsMobile, setShowWidgetsMobile] = useState(false);
+
+  // Filters
   const [filters, setFilters] = useState<FilterState>({
     periodType: 'MONTH',
     selectedMonth: new Date().getMonth(),
@@ -42,11 +54,16 @@ const App: React.FC = () => {
     eventTag: 'ALL'
   });
 
+  // =========================================
+  // DATA LOADING & EFFECTS
+  // =========================================
+
   const loadData = async (key: string) => {
     try {
       setLoading(true);
       setError(null);
       const data = await fetchTransactions(key);
+      // Filter primarily by year 2025 as per app scope
       const data2025 = data.filter(t => new Date(t.date).getFullYear() === 2025);
       setRawData(data2025);
     } catch (err) {
@@ -62,6 +79,69 @@ const App: React.FC = () => {
       loadData(apiKey);
     }
   }, [apiKey]);
+
+  // =========================================
+  // MEMOIZED CALCULATIONS
+  // =========================================
+
+  const availableTags = useMemo(() => {
+    const tags = new Set<string>();
+    rawData.forEach(t => {
+      if (t.flag && t.flag.trim() !== '') tags.add(t.flag.trim());
+    });
+    return Array.from(tags).sort();
+  }, [rawData]);
+
+  // Data for Balance KPI (Yearly view usually)
+  const balanceTransactions = useMemo(() => {
+    return rawData.filter(t => {
+      const tDate = new Date(t.date);
+      if (tDate.getFullYear() !== filters.selectedYear) return false;
+      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
+      return true;
+    });
+  }, [rawData, filters.selectedYear, filters.accountId]);
+
+  // Main Filtered Data for Table/Graphs
+  const filteredTransactions = useMemo(() => {
+    return rawData.filter(t => {
+      const tDate = new Date(t.date);
+      if (tDate.getFullYear() !== filters.selectedYear) return false;
+      if (filters.periodType === 'MONTH') {
+        if (tDate.getMonth() !== filters.selectedMonth) return false;
+      }
+      // Standard Filters
+      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
+      if (filters.category !== 'ALL' && t.category !== filters.category) return false;
+      if (filters.eventTag !== 'ALL' && t.flag !== filters.eventTag) return false;
+      
+      // Analytics Type Filter
+      if (filters.analyticsType === 'NO_TRANSFER' && t.analytics === 'FALSE') return false;
+      if (filters.analyticsType === 'WORK_ONLY' && t.analytics !== 'WORK') return false;
+      if (filters.analyticsType === 'TRANSFERS_ONLY' && t.analytics !== 'FALSE') return false;
+      
+      return true;
+    });
+  }, [rawData, filters]);
+
+  // Data passed to Detail Views (respects most filters except Analytics Type)
+  const detailViewTransactions = useMemo(() => {
+    return rawData.filter(t => {
+      const tDate = new Date(t.date);
+      if (tDate.getFullYear() !== filters.selectedYear) return false;
+      if (filters.periodType === 'MONTH') {
+        if (tDate.getMonth() !== filters.selectedMonth) return false;
+      }
+      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
+      if (filters.category !== 'ALL' && t.category !== filters.category) return false;
+      if (filters.eventTag !== 'ALL' && t.flag !== filters.eventTag) return false;
+      return true;
+    });
+  }, [rawData, filters]);
+
+  // =========================================
+  // EVENT HANDLERS
+  // =========================================
 
   const handleLogin = (key: string) => {
     localStorage.setItem('finance_apikey', key);
@@ -97,66 +177,28 @@ const App: React.FC = () => {
 
   const handleCardClick = (type: DetailType) => {
       setActiveView(activeView === type ? null : type);
-      setSelectedTagDetail(null);
+      if (type === 'TAGS_SUMMARY') setSelectedTagDetail(null);
   };
 
   const handleTagClick = (tagName: string) => {
-      setActiveView('TAG');
-      setSelectedTagDetail(tagName);
+      if (tagName === '') {
+          setActiveView('TAGS_SUMMARY');
+          setSelectedTagDetail(null);
+      } else {
+          setActiveView('TAG');
+          setSelectedTagDetail(tagName);
+      }
   };
 
-  const handleCloseDetail = () => {
-      setActiveView(null);
-      setSelectedTagDetail(null);
-  };
-  
-  const availableTags = useMemo(() => {
-    const tags = new Set<string>();
-    rawData.forEach(t => {
-      if (t.flag && t.flag.trim() !== '') tags.add(t.flag.trim());
-    });
-    return Array.from(tags).sort();
-  }, [rawData]);
+  // Month Options for Select
+  const monthOptions = MONTHS.map((m, idx) => ({ 
+    label: `${m} ${filters.selectedYear}`, 
+    value: idx 
+  }));
 
-  const balanceTransactions = useMemo(() => {
-    return rawData.filter(t => {
-      const tDate = new Date(t.date);
-      if (tDate.getFullYear() !== filters.selectedYear) return false;
-      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
-      return true;
-    });
-  }, [rawData, filters.selectedYear, filters.accountId]);
-
-  const filteredTransactions = useMemo(() => {
-    return rawData.filter(t => {
-      const tDate = new Date(t.date);
-      if (tDate.getFullYear() !== filters.selectedYear) return false;
-      if (filters.periodType === 'MONTH') {
-        if (tDate.getMonth() !== filters.selectedMonth) return false;
-      }
-      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
-      if (filters.category !== 'ALL' && t.category !== filters.category) return false;
-      if (filters.eventTag !== 'ALL' && t.flag !== filters.eventTag) return false;
-      if (filters.analyticsType === 'NO_TRANSFER' && t.analytics === 'FALSE') return false;
-      if (filters.analyticsType === 'WORK_ONLY' && t.analytics !== 'WORK') return false;
-      if (filters.analyticsType === 'TRANSFERS_ONLY' && t.analytics !== 'FALSE') return false;
-      return true;
-    });
-  }, [rawData, filters]);
-
-  const detailViewTransactions = useMemo(() => {
-    return rawData.filter(t => {
-      const tDate = new Date(t.date);
-      if (tDate.getFullYear() !== filters.selectedYear) return false;
-      if (filters.periodType === 'MONTH') {
-        if (tDate.getMonth() !== filters.selectedMonth) return false;
-      }
-      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
-      if (filters.category !== 'ALL' && t.category !== filters.category) return false;
-      if (filters.eventTag !== 'ALL' && t.flag !== filters.eventTag) return false;
-      return true;
-    });
-  }, [rawData, filters]);
+  // =========================================
+  // RENDER
+  // =========================================
 
   if (!apiKey) {
     return <LoginScreen onLogin={handleLogin} />;
@@ -165,19 +207,65 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen pb-20 bg-[#fdfbff]">
       
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100 shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* Header Bar */}
+      <header className="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm transition-all">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-auto min-h-[80px] py-4 sm:py-0 sm:h-20 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4">
+          
+          {/* Logo */}
+          <div className="flex items-center gap-3 shrink-0">
             <div className="bg-violet-600 p-2 rounded-xl text-white shadow-lg shadow-violet-200">
                <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800">Finance 2025</h1>
-              <p className="text-[10px] sm:text-xs text-slate-500 font-medium uppercase tracking-wider hidden sm:block">Dashboard Finanziaria</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium uppercase tracking-wider hidden sm:block">Dashboard</p>
             </div>
           </div>
+
+          {/* Period Controls */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto order-3 sm:order-2 justify-center flex-1">
+             <div className="bg-slate-100 p-1 rounded-full inline-flex shadow-inner shrink-0">
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, periodType: 'MONTH' }))}
+                  className={`px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 ${
+                    filters.periodType === 'MONTH' ? 'bg-white text-violet-700 shadow-md' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Mese
+                </button>
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, periodType: 'YEAR' }))}
+                  className={`px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 ${
+                    filters.periodType === 'YEAR' ? 'bg-white text-violet-700 shadow-md' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Anno
+                </button>
+             </div>
+
+             <div className="w-full sm:w-48 transition-opacity duration-200">
+               <CustomSelect
+                  value={filters.periodType === 'YEAR' ? "" : filters.selectedMonth}
+                  onChange={(val) => setFilters(prev => ({ ...prev, selectedMonth: parseInt(val, 10) }))}
+                  options={monthOptions}
+                  icon={<Calendar className="w-4 h-4"/>}
+                  className="h-10"
+                  disabled={filters.periodType === 'YEAR'}
+                  placeholder={filters.periodType === 'YEAR' ? "Tutto l'anno" : "Seleziona Mese"}
+               />
+             </div>
+          </div>
           
-          <div className="flex items-center gap-4">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 order-2 sm:order-3 shrink-0">
+            <button
+                onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
+                className="hidden md:flex items-center gap-2 px-5 py-2 bg-violet-600 text-white rounded-full font-bold shadow-md shadow-violet-200 hover:bg-violet-700 hover:shadow-lg transition-all active:scale-95 text-sm"
+            >
+                <Plus className="w-4 h-4" />
+                <span>Nuovo Movimento</span>
+            </button>
+
             <button 
               onClick={handleLogout}
               className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 rounded-full transition-colors text-xs sm:text-sm font-bold"
@@ -190,6 +278,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      {/* Main Content Area */}
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 mt-6 sm:mt-8">
         
         {loading && rawData.length === 0 ? (
@@ -219,73 +308,76 @@ const App: React.FC = () => {
               onCardClick={handleCardClick}
               periodType={filters.periodType}
             />
+            
+            {/* Conditional View: Detail vs Dashboard */}
             {activeView ? (
                <KPIDetailView 
                   type={activeView}
                   transactions={detailViewTransactions}
                   year={filters.selectedYear}
                   tagName={selectedTagDetail}
-                  onClose={handleCloseDetail}
+                  onClose={() => { setActiveView(null); setSelectedTagDetail(null); }}
+                  onTagSelect={handleTagClick}
                   periodType={filters.periodType}
                   selectedMonth={filters.selectedMonth}
                />
             ) : (
-               <div className="flex flex-col xl:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  
-                  {/* Main Content: Table (Priority on Mobile) */}
-                  <div className="w-full xl:w-3/4">
-                      {/* Mobile Toggle for Widgets */}
-                      <div className="xl:hidden mb-4">
-                        <button 
-                          onClick={() => setShowWidgetsMobile(!showWidgetsMobile)}
-                          className="w-full flex items-center justify-between px-5 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-bold active:scale-[0.99] transition-transform"
-                        >
-                          <div className="flex items-center gap-3">
-                            <SlidersHorizontal className="w-5 h-5 text-violet-600" />
-                            <span>{showWidgetsMobile ? 'Nascondi' : 'Mostra'} Analisi e Gestione</span>
-                          </div>
-                          {showWidgetsMobile ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
-                        </button>
+               <>
+                 {/* Mobile Widget Toggle */}
+                 <div className="xl:hidden mb-4">
+                    <button 
+                      onClick={() => setShowWidgetsMobile(!showWidgetsMobile)}
+                      className="w-full flex items-center justify-between px-5 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-bold active:scale-[0.99] transition-transform"
+                    >
+                      <div className="flex items-center gap-3">
+                        <SlidersHorizontal className="w-5 h-5 text-violet-600" />
+                        <span>{showWidgetsMobile ? 'Nascondi' : 'Mostra'} Analisi e Gestione</span>
                       </div>
+                      {showWidgetsMobile ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    </button>
+                 </div>
 
-                      <TransactionTable 
-                        transactions={filteredTransactions} 
-                        onDelete={handleDelete}
-                        onEdit={handleEdit}
-                        apiKey={apiKey}
-                      />
-                  </div>
+                 <div className="flex flex-col xl:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    
+                    {/* Sidebar: Widgets (Management, Stats) */}
+                    <div className={`w-full xl:w-1/4 xl:order-2 ${showWidgetsMobile ? 'block' : 'hidden xl:block'}`}>
+                        <div className="sticky top-24 flex flex-col gap-6">
+                            <div className="h-[500px]">
+                                <ManagementPanel 
+                                    accounts={accounts}
+                                    setAccounts={setAccounts}
+                                    categories={categories}
+                                    setCategories={setCategories}
+                                    allTransactions={rawData}
+                                    onDataChange={() => loadData(apiKey)}
+                                    apiKey={apiKey}
+                                />
+                            </div>
+                            <CategoryStats transactions={filteredTransactions} />
+                        </div>
+                    </div>
 
-                  {/* Sidebar: Widgets (Sticky on Desktop, Collapsible on Mobile) */}
-                  <div className={`w-full xl:w-1/4 ${showWidgetsMobile ? 'block' : 'hidden xl:block'}`}>
-                      <div className="sticky top-24 flex flex-col gap-6">
-                          <div className="h-[500px]">
-                              <ManagementPanel 
-                                  accounts={accounts}
-                                  setAccounts={setAccounts}
-                                  categories={categories}
-                                  setCategories={setCategories}
-                                  allTransactions={rawData}
-                                  onDataChange={() => loadData(apiKey)}
-                                  apiKey={apiKey}
-                              />
-                          </div>
-                          <CategoryStats transactions={filteredTransactions} />
-                          <TagStats 
-                              transactions={filteredTransactions}
-                              onTagClick={handleTagClick}
-                          />
-                      </div>
-                  </div>
-               </div>
+                    {/* Main Content: Transactions Table */}
+                    <div className="w-full xl:w-3/4 xl:order-1">
+                        <TransactionTable 
+                          transactions={filteredTransactions} 
+                          onDelete={handleDelete}
+                          onEdit={handleEdit}
+                          apiKey={apiKey}
+                        />
+                    </div>
+
+                 </div>
+               </>
             )}
           </>
         )}
       </main>
 
+      {/* Mobile FAB */}
       <button
         onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 text-white rounded-2xl shadow-xl shadow-violet-300 flex items-center justify-center z-50 active:scale-95 transition-transform hover:bg-violet-700"
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-violet-600 text-white rounded-2xl shadow-xl shadow-violet-300 flex items-center justify-center z-50 active:scale-95 transition-transform hover:bg-violet-700"
       >
         <Plus className="w-8 h-8" />
       </button>
