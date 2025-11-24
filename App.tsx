@@ -14,7 +14,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { CustomSelect } from './components/CustomSelect';
 
 // Icons & Utils
-import { Loader2, Plus, LayoutDashboard, LogOut, SlidersHorizontal, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { Loader2, Plus, LayoutDashboard, LogOut, SlidersHorizontal, ChevronDown, ChevronUp, Calendar, Download } from 'lucide-react';
 
 const MONTHS = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -42,6 +42,7 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<DetailType | null>(null);
   const [selectedTagDetail, setSelectedTagDetail] = useState<string | null>(null);
   const [showWidgetsMobile, setShowWidgetsMobile] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   // Filters
   const [filters, setFilters] = useState<FilterState>({
@@ -53,6 +54,33 @@ const App: React.FC = () => {
     analyticsType: 'ALL',
     eventTag: 'ALL'
   });
+
+  // =========================================
+  // PWA INSTALL LOGIC
+  // =========================================
+  useEffect(() => {
+    const handler = (e: any) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    // Show the install prompt
+    installPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   // =========================================
   // DATA LOADING & EFFECTS
@@ -224,10 +252,10 @@ const App: React.FC = () => {
 
           {/* Period Controls */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto order-3 sm:order-2 justify-center flex-1">
-             <div className="bg-slate-100 p-1 rounded-full inline-flex shadow-inner shrink-0">
+             <div className="bg-slate-100 p-1.5 rounded-full inline-flex shadow-inner shrink-0">
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, periodType: 'MONTH' }))}
-                  className={`px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 ${
+                  className={`px-6 py-2.5 sm:px-5 sm:py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
                     filters.periodType === 'MONTH' ? 'bg-white text-violet-700 shadow-md' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
@@ -235,7 +263,7 @@ const App: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setFilters(prev => ({ ...prev, periodType: 'YEAR' }))}
-                  className={`px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 ${
+                  className={`px-6 py-2.5 sm:px-5 sm:py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
                     filters.periodType === 'YEAR' ? 'bg-white text-violet-700 shadow-md' : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
@@ -249,7 +277,7 @@ const App: React.FC = () => {
                   onChange={(val) => setFilters(prev => ({ ...prev, selectedMonth: parseInt(val, 10) }))}
                   options={monthOptions}
                   icon={<Calendar className="w-4 h-4"/>}
-                  className="h-10"
+                  className="h-12 sm:h-10" // Taller on mobile
                   disabled={filters.periodType === 'YEAR'}
                   placeholder={filters.periodType === 'YEAR' ? "Tutto l'anno" : "Seleziona Mese"}
                />
@@ -258,6 +286,17 @@ const App: React.FC = () => {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 order-2 sm:order-3 shrink-0">
+            {installPrompt && (
+                <button
+                    onClick={handleInstallClick}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full font-bold shadow-md shadow-emerald-200 hover:bg-emerald-700 transition-all text-xs sm:text-sm"
+                    title="Installa App"
+                >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">Installa</span>
+                </button>
+            )}
+
             <button
                 onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
                 className="hidden md:flex items-center gap-2 px-5 py-2 bg-violet-600 text-white rounded-full font-bold shadow-md shadow-violet-200 hover:bg-violet-700 hover:shadow-lg transition-all active:scale-95 text-sm"

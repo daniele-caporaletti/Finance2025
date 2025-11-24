@@ -1,7 +1,7 @@
 import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPayload } from '../types';
 
 // Configuration
-const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbxnb60NH1-Q5kYW91EjSYaeUrRPk5kANhwVoSMnDHbUmVi1ACUdoUmgxQ-t692Gt2Kq/exec';
+const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbyC4NNCVX94Knn0087-HtuO2MskPsBCQV5lrhIsVxOkm-hgIBsKupzMylvs_XtasOyV/exec';
 
 /**
  * Helper function to handle API responses.
