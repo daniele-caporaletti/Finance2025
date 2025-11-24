@@ -51,8 +51,8 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
     <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-sm border border-white/20 overflow-hidden flex flex-col h-full relative z-0">
       
       {/* Clean Header */}
-      <div className="pt-8 px-8 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <h3 className="text-xl font-bold text-slate-900">Movimenti</h3>
+      <div className="pt-8 px-8 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Movimenti</h3>
         <div className="relative w-full sm:w-72 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-violet-500 transition-colors" />
           <input
@@ -66,23 +66,23 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
       </div>
 
       {/* Airy Table */}
-      <div className="overflow-x-auto flex-1 px-2">
-        <table className="w-full text-left text-sm text-slate-600 border-separate border-spacing-y-1">
-          <thead>
+      <div className="overflow-x-auto flex-1 px-3 pb-4">
+        <table className="w-full text-left text-sm text-slate-600 border-separate border-spacing-y-2">
+          <thead className="bg-slate-50/80 backdrop-blur-sm rounded-2xl">
             <tr className="text-slate-400 uppercase text-[10px] font-bold tracking-widest">
-              <th className="px-6 py-4">Data</th>
+              <th className="px-6 py-4 rounded-l-2xl">Data</th>
               <th className="px-6 py-4">Conto</th>
               <th className="px-6 py-4">Categoria</th>
               <th className="px-6 py-4 text-right">Importo</th>
-              <th className="px-6 py-4 text-right">Azioni</th>
+              <th className="px-6 py-4 text-right rounded-r-2xl">Azioni</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="space-y-2">
             {paginatedData.map((t) => (
-              <tr key={t.id} className="group hover:bg-white/80 transition-colors rounded-2xl">
+              <tr key={t.id} className="group hover:bg-white/90 transition-all duration-200 hover:shadow-sm hover:scale-[1.005]">
                 {/* Data */}
-                <td className="px-6 py-4 whitespace-nowrap first:rounded-l-2xl">
-                  <span className="font-bold text-slate-700 tabular-nums text-sm block">
+                <td className="px-6 py-4 whitespace-nowrap rounded-l-2xl border-y border-l border-transparent group-hover:border-white/20">
+                  <span className="font-bold text-slate-800 tabular-nums text-sm block">
                       {format(new Date(t.date), 'dd/MM')}
                   </span>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
@@ -91,23 +91,23 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                 </td>
 
                 {/* Conto */}
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 border-y border-transparent group-hover:border-white/20">
                    <div className="flex flex-col">
                        <span className="font-bold text-slate-700 text-xs mb-1">{t.account}</span>
                        {t.note && <p className="text-[11px] text-slate-400 italic truncate max-w-[150px]">{t.note}</p>}
                        
                        {/* Badges Row */}
                        <div className="flex flex-wrap gap-1 mt-1">
-                           {t.flag && <span className="inline-flex items-center text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md"><Tag className="w-2 h-2 mr-1" />{t.flag}</span>}
-                           {t.analytics === 'WORK' && <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-indigo-50 text-indigo-600"><Briefcase className="w-2 h-2 mr-1"/>Work</span>}
-                           {t.analytics === 'FALSE' && <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 text-slate-500"><ArrowLeftRight className="w-2 h-2 mr-1"/>Transfer</span>}
+                           {t.flag && <span className="inline-flex items-center text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100/50"><Tag className="w-2 h-2 mr-1" />{t.flag}</span>}
+                           {t.analytics === 'WORK' && <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100/50"><Briefcase className="w-2 h-2 mr-1"/>Work</span>}
+                           {t.analytics === 'FALSE' && <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200/50"><ArrowLeftRight className="w-2 h-2 mr-1"/>Transfer</span>}
                        </div>
                    </div>
                 </td>
 
                 {/* Categoria */}
-                <td className="px-6 py-4">
-                  <div className="inline-flex items-center gap-3 px-3 py-1.5 rounded-xl bg-slate-50/50 border border-slate-100 group-hover:bg-white group-hover:shadow-sm transition-all">
+                <td className="px-6 py-4 border-y border-transparent group-hover:border-white/20">
+                  <div className="inline-flex items-center gap-3 px-3 py-1.5 rounded-xl bg-slate-50/80 border border-slate-100 group-hover:bg-white group-hover:shadow-sm transition-all">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${getCategoryColor(t.category)}`}>
                           {getCategoryIcon(t.category, "w-3 h-3")}
                       </div>
@@ -116,20 +116,20 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                 </td>
 
                 {/* Importo */}
-                <td className="px-6 py-4 text-right whitespace-nowrap">
+                <td className="px-6 py-4 text-right whitespace-nowrap border-y border-transparent group-hover:border-white/20">
                   <div className={`font-bold text-lg tabular-nums tracking-tight ${t.valueChf < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                     {formatCurrency(t.valueChf, 'CHF')}
                   </div>
                   {t.curr !== 'CHF' && (
-                      <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                      <div className="text-[10px] text-slate-400 font-medium mt-0.5 bg-slate-50 inline-block px-1.5 rounded">
                           {formatCurrency(t.movement, t.curr)}
                       </div>
                   )}
                 </td>
 
                 {/* Azioni */}
-                <td className="px-6 py-4 text-right last:rounded-r-2xl">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <td className="px-6 py-4 text-right rounded-r-2xl border-y border-r border-transparent group-hover:border-white/20">
+                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button onClick={() => onEdit(t)} className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
                       <Pencil className="w-4 h-4" />
                     </button>

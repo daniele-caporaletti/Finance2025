@@ -45,13 +45,13 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
   return (
     <div className="space-y-4 sm:space-y-6 mb-8">
       
-      {/* HERO CARDS (Expenses & Balance) */}
+      {/* HERO CARDS ROW 1 (Expenses & Balance) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         
         {/* Left Hero: Expenses (Violet Theme) */}
         <div 
             onClick={() => onCardClick('EXPENSE')}
-            className={`relative overflow-hidden rounded-[2.5rem] p-8 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-md
+            className={`relative overflow-hidden rounded-[2.5rem] p-8 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-xl hover:shadow-violet-200/50 hover:-translate-y-1
             ${activeView === 'EXPENSE' ? 'ring-4 ring-violet-200 bg-violet-100' : 'bg-[#E8E6F8]'}`}
         >
             <div className="relative z-10">
@@ -73,7 +73,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
         {/* Right Hero: Balance (Pink Theme) */}
         <div 
             onClick={() => onCardClick('BALANCE')}
-            className={`relative overflow-hidden rounded-[2.5rem] p-8 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-md
+            className={`relative overflow-hidden rounded-[2.5rem] p-8 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-xl hover:shadow-pink-200/50 hover:-translate-y-1
             ${activeView === 'BALANCE' ? 'ring-4 ring-pink-200 bg-pink-100' : 'bg-[#FCE4EC]'}`}
         >
             <div className="relative z-10">
@@ -93,58 +93,70 @@ export const KPICards: React.FC<KPICardsProps> = ({ periodTransactions, balanceT
 
       </div>
 
-      {/* SECONDARY METRICS (Income, Work, Events) */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+      {/* HERO CARDS ROW 2 (Secondary Metrics) */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-6">
           
-          {/* Income */}
+          {/* Income (Emerald Theme) */}
           <div 
             onClick={() => onCardClick('INCOME')}
-            className={`relative rounded-3xl p-4 sm:p-6 cursor-pointer transition-all group border border-transparent hover:border-emerald-100 hover:bg-emerald-50/50 hover:shadow-sm bg-white/60 backdrop-blur-md
-            ${activeView === 'INCOME' ? 'bg-emerald-50 ring-2 ring-emerald-100' : ''}`}
+            className={`relative overflow-hidden rounded-[2rem] p-5 sm:p-6 cursor-pointer transition-all duration-300 group shadow-sm hover:shadow-lg hover:shadow-emerald-100/50 hover:-translate-y-1 border border-white/50
+            ${activeView === 'INCOME' ? 'ring-4 ring-emerald-100 bg-emerald-50' : 'bg-gradient-to-br from-emerald-50 to-white'}`}
           >
-              <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
-                      <TrendingUp className="w-4 h-4" />
+              <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 rounded-lg bg-white/60 text-emerald-600 shadow-sm backdrop-blur-sm">
+                          <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Entrate</span>
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Entrate</span>
+                  <div className="text-lg sm:text-2xl font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
+                      +{formatCHF(stats.income)}
+                  </div>
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-700 group-hover:text-emerald-700 transition-colors">
-                  +{formatCHF(stats.income)}
-              </div>
+              {/* Watermark */}
+              <TrendingUp className="absolute -bottom-4 -right-4 w-24 h-24 text-emerald-600/5 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-500" />
           </div>
 
-          {/* Work */}
+          {/* Work (Indigo Theme) */}
           <div 
             onClick={() => onCardClick('WORK')}
-            className={`relative rounded-3xl p-4 sm:p-6 cursor-pointer transition-all group border border-transparent hover:border-indigo-100 hover:bg-indigo-50/50 hover:shadow-sm bg-white/60 backdrop-blur-md
-            ${activeView === 'WORK' ? 'bg-indigo-50 ring-2 ring-indigo-100' : ''}`}
+            className={`relative overflow-hidden rounded-[2rem] p-5 sm:p-6 cursor-pointer transition-all duration-300 group shadow-sm hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-1 border border-white/50
+            ${activeView === 'WORK' ? 'ring-4 ring-indigo-100 bg-indigo-50' : 'bg-gradient-to-br from-indigo-50 to-white'}`}
           >
-              <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-lg bg-indigo-100 text-indigo-700">
-                      <Briefcase className="w-4 h-4" />
+              <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 rounded-lg bg-white/60 text-indigo-600 shadow-sm backdrop-blur-sm">
+                          <Briefcase className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Lavoro</span>
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Lavoro</span>
+                  <div className="text-lg sm:text-2xl font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                      {formatCHF(stats.work)}
+                  </div>
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-700 group-hover:text-indigo-700 transition-colors">
-                  {formatCHF(stats.work)}
-              </div>
+              {/* Watermark */}
+              <Briefcase className="absolute -bottom-4 -right-4 w-24 h-24 text-indigo-600/5 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-500" />
           </div>
 
-          {/* Events */}
+          {/* Events (Orange Theme) */}
           <div 
             onClick={() => onCardClick('TAGS_SUMMARY')}
-            className={`relative rounded-3xl p-4 sm:p-6 cursor-pointer transition-all group border border-transparent hover:border-orange-100 hover:bg-orange-50/50 hover:shadow-sm bg-white/60 backdrop-blur-md
-            ${activeView === 'TAGS_SUMMARY' ? 'bg-orange-50 ring-2 ring-orange-100' : ''}`}
+            className={`relative overflow-hidden rounded-[2rem] p-5 sm:p-6 cursor-pointer transition-all duration-300 group shadow-sm hover:shadow-lg hover:shadow-orange-100/50 hover:-translate-y-1 border border-white/50
+            ${activeView === 'TAGS_SUMMARY' ? 'ring-4 ring-orange-100 bg-orange-50' : 'bg-gradient-to-br from-orange-50 to-white'}`}
           >
-              <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-lg bg-orange-100 text-orange-700">
-                      <Tag className="w-4 h-4" />
+              <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 rounded-lg bg-white/60 text-orange-600 shadow-sm backdrop-blur-sm">
+                          <Tag className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Eventi</span>
                   </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Eventi</span>
+                  <div className="text-lg sm:text-2xl font-bold text-slate-800 group-hover:text-orange-700 transition-colors">
+                      {formatCHF(stats.events)}
+                  </div>
               </div>
-              <div className="text-lg sm:text-xl font-bold text-slate-700 group-hover:text-orange-700 transition-colors">
-                  {formatCHF(stats.events)}
-              </div>
+              {/* Watermark */}
+              <Tag className="absolute -bottom-4 -right-4 w-24 h-24 text-orange-600/5 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-500" />
           </div>
 
       </div>
