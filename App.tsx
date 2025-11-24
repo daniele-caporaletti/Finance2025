@@ -15,7 +15,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { CustomSelect } from './components/CustomSelect';
 
 // Icons & Utils
-import { Loader2, Plus, LayoutDashboard, LogOut, Calendar, Download, Home, PieChart, Settings, Wallet } from 'lucide-react';
+import { Loader2, Plus, LayoutDashboard, LogOut, Calendar, Download, Home, ChartPie, Settings, Wallet } from 'lucide-react';
 
 const MONTHS = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -459,7 +459,7 @@ const App: React.FC = () => {
                 onClick={() => setMobileTab('ANALYTICS')}
                 className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'ANALYTICS' ? 'text-violet-600' : 'text-slate-400'}`}
               >
-                 <PieChart className={`w-6 h-6 ${mobileTab === 'ANALYTICS' ? 'fill-violet-100' : ''}`} />
+                 <ChartPie className={`w-6 h-6 ${mobileTab === 'ANALYTICS' ? 'fill-violet-100' : ''}`} />
                  <span className="text-[10px] font-bold">Analisi</span>
               </button>
 

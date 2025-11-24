@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { 
   TrendingUp, Bus, Gift, Banknote, Wrench, Home, Heart, CreditCard, 
   Percent, Smile, FileText, GraduationCap, PartyPopper, Utensils, 
-  Tag, ArrowRightLeft, ShoppingBag, HelpCircle, Briefcase
+  Tag, ArrowRightLeft, ShoppingBag, CircleHelp, Briefcase
 } from 'lucide-react';
 
 export const getCategoryIcon = (category: string, className = "w-5 h-5") => {
@@ -24,7 +25,7 @@ export const getCategoryIcon = (category: string, className = "w-5 h-5") => {
     case 'SALES': return <Tag className={className} />;
     case 'TRANSFER': return <ArrowRightLeft className={className} />;
     case 'SHOPPING': return <ShoppingBag className={className} />;
-    default: return <HelpCircle className={className} />;
+    default: return <CircleHelp className={className} />;
   }
 };
 

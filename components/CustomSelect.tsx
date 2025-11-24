@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, CircleCheck } from 'lucide-react';
 
 interface Option {
   label: string;
@@ -97,7 +98,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 }`}
               >
                 <span className="truncate">{option.label}</span>
-                {isSelected && <Check className="w-4 h-4 text-violet-600" />}
+                {isSelected && <CircleCheck className="w-4 h-4 text-violet-600" />}
               </button>
             );
           })}

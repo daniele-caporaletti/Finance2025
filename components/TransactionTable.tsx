@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Transaction } from '../types';
 import { format } from 'date-fns';
-import { Search, Tag, Briefcase, ArrowLeftRight, Trash2, Pencil, AlertTriangle } from 'lucide-react';
+import { Search, Tag, Briefcase, ArrowLeftRight, Trash2, Pencil, TriangleAlert } from 'lucide-react';
 import { getCategoryColor, getCategoryIcon } from './CategoryIcons';
 
 interface TransactionTableProps {
@@ -15,8 +15,8 @@ interface TransactionTableProps {
 export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, onDelete, onEdit, apiKey }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [deletingId, setDeletingId] = useState<number | null>(null); // ID being processed via API
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null); // ID waiting for confirmation
+  const [deletingId, setDeletingId] = useState<number | null>(null); 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null); 
   
   const itemsPerPage = 20;
 
@@ -40,7 +40,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
   const confirmDelete = async () => {
     if (confirmDeleteId !== null) {
         setDeletingId(confirmDeleteId);
-        setConfirmDeleteId(null); // Close modal
+        setConfirmDeleteId(null); 
         await onDelete(confirmDeleteId);
         setDeletingId(null);
     }
@@ -48,80 +48,87 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
 
   return (
     <>
-    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/20 overflow-hidden flex flex-col h-full relative z-0">
-      {/* Header */}
-      <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100/50">
-        <h3 className="text-lg font-bold text-slate-800">Ultimi Movimenti</h3>
-        <div className="relative w-full sm:w-64 group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-violet-500 transition-colors" />
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-sm border border-white/20 overflow-hidden flex flex-col h-full relative z-0">
+      
+      {/* Clean Header */}
+      <div className="pt-8 px-8 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <h3 className="text-xl font-bold text-slate-900">Movimenti</h3>
+        <div className="relative w-full sm:w-72 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-hover:text-violet-500 transition-colors" />
           <input
             type="text"
-            placeholder="Cerca..."
+            placeholder="Cerca movimento..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-100 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-violet-100 transition-all outline-none placeholder:text-slate-400"
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-transparent hover:border-slate-200 rounded-2xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-violet-100 focus:border-violet-200 transition-all outline-none placeholder:text-slate-400"
           />
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto flex-1">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="bg-slate-50/80 text-slate-400 font-bold uppercase text-[10px] tracking-wider sticky top-0 z-10 backdrop-blur-md">
-            <tr>
+      {/* Airy Table */}
+      <div className="overflow-x-auto flex-1 px-2">
+        <table className="w-full text-left text-sm text-slate-600 border-separate border-spacing-y-1">
+          <thead>
+            <tr className="text-slate-400 uppercase text-[10px] font-bold tracking-widest">
               <th className="px-6 py-4">Data</th>
-              <th className="px-6 py-4">Conto & Note</th>
+              <th className="px-6 py-4">Conto</th>
               <th className="px-6 py-4">Categoria</th>
-              <th className="px-6 py-4 text-right">CHF</th>
-              <th className="px-6 py-4 text-right w-24">Azioni</th>
+              <th className="px-6 py-4 text-right">Importo</th>
+              <th className="px-6 py-4 text-right">Azioni</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50/50">
+          <tbody>
             {paginatedData.map((t) => (
-              <tr key={t.id} className="group hover:bg-white/60 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col">
-                      <span className="font-bold text-slate-700 text-base">
-                          {format(new Date(t.date), 'dd')}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">
-                          {format(new Date(t.date), 'MMM')}
-                      </span>
-                  </div>
+              <tr key={t.id} className="group hover:bg-white/80 transition-colors rounded-2xl">
+                {/* Data */}
+                <td className="px-6 py-4 whitespace-nowrap first:rounded-l-2xl">
+                  <span className="font-bold text-slate-700 tabular-nums text-sm block">
+                      {format(new Date(t.date), 'dd/MM')}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      {format(new Date(t.date), 'yyyy')}
+                  </span>
                 </td>
-                <td className="px-6 py-4 max-w-[200px]">
-                   <div className="flex flex-col gap-1">
-                       <span className="font-bold text-slate-700 text-xs">{t.account}</span>
-                       <div className="flex flex-wrap gap-1">
-                           {t.flag && <span className="inline-flex items-center text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100"><Tag className="w-2 h-2 mr-1" />{t.flag}</span>}
-                           {t.analytics === 'WORK' && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100"><Briefcase className="w-2 h-2 mr-1"/>Work</span>}
-                           {t.analytics === 'FALSE' && <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200"><ArrowLeftRight className="w-2 h-2 mr-1"/>Transfer</span>}
+
+                {/* Conto */}
+                <td className="px-6 py-4">
+                   <div className="flex flex-col">
+                       <span className="font-bold text-slate-700 text-xs mb-1">{t.account}</span>
+                       {t.note && <p className="text-[11px] text-slate-400 italic truncate max-w-[150px]">{t.note}</p>}
+                       
+                       {/* Badges Row */}
+                       <div className="flex flex-wrap gap-1 mt-1">
+                           {t.flag && <span className="inline-flex items-center text-[9px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md"><Tag className="w-2 h-2 mr-1" />{t.flag}</span>}
+                           {t.analytics === 'WORK' && <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-indigo-50 text-indigo-600"><Briefcase className="w-2 h-2 mr-1"/>Work</span>}
+                           {t.analytics === 'FALSE' && <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 text-slate-500"><ArrowLeftRight className="w-2 h-2 mr-1"/>Transfer</span>}
                        </div>
-                       {t.note && <p className="text-xs text-slate-400 truncate">{t.note}</p>}
                    </div>
                 </td>
+
+                {/* Categoria */}
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${getCategoryColor(t.category)}`}>
-                          {getCategoryIcon(t.category, "w-4 h-4")}
+                  <div className="inline-flex items-center gap-3 px-3 py-1.5 rounded-xl bg-slate-50/50 border border-slate-100 group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${getCategoryColor(t.category)}`}>
+                          {getCategoryIcon(t.category, "w-3 h-3")}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-700">{t.category}</span>
-                        <span className="text-[10px] text-slate-400">{t.subcategory}</span>
-                      </div>
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">{t.category}</span>
                   </div>
                 </td>
-                <td className={`px-6 py-4 text-right whitespace-nowrap`}>
-                  <div className={`font-bold text-base ${t.valueChf < 0 ? 'text-slate-800' : 'text-emerald-600'}`}>
+
+                {/* Importo */}
+                <td className="px-6 py-4 text-right whitespace-nowrap">
+                  <div className={`font-bold text-lg tabular-nums tracking-tight ${t.valueChf < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                     {formatCurrency(t.valueChf, 'CHF')}
                   </div>
                   {t.curr !== 'CHF' && (
-                      <div className="text-[10px] text-slate-400 font-medium">
+                      <div className="text-[10px] text-slate-400 font-medium mt-0.5">
                           {formatCurrency(t.movement, t.curr)}
                       </div>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right">
+
+                {/* Azioni */}
+                <td className="px-6 py-4 text-right last:rounded-r-2xl">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => onEdit(t)} className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
                       <Pencil className="w-4 h-4" />
@@ -143,10 +150,10 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
       
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="p-4 border-t border-slate-50 flex justify-center gap-2">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-50 text-slate-500 disabled:opacity-30 hover:bg-slate-100">Prev</button>
-            <span className="text-xs font-bold text-slate-400 py-1">{currentPage} / {totalPages}</span>
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1 text-xs font-bold rounded-lg bg-slate-50 text-slate-500 disabled:opacity-30 hover:bg-slate-100">Next</button>
+        <div className="p-6 border-t border-slate-50 flex justify-center gap-3">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-100 text-slate-500 disabled:opacity-30 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm">Precedente</button>
+            <span className="text-xs font-bold text-slate-400 py-2">{currentPage} / {totalPages}</span>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-4 py-2 text-xs font-bold rounded-xl bg-white border border-slate-100 text-slate-500 disabled:opacity-30 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm">Successiva</button>
         </div>
       )}
     </div>
@@ -154,22 +161,22 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
     {/* DELETE CONFIRMATION MODAL */}
     {confirmDeleteId !== null && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
-                <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-600">
-                    <AlertTriangle className="w-7 h-7"/>
+            <div className="bg-white p-6 rounded-[2rem] shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
+                <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-500 shadow-inner">
+                    <TriangleAlert className="w-8 h-8"/>
                 </div>
-                <h4 className="text-lg font-bold text-slate-800 mb-2">Elimina Movimento</h4>
-                <p className="text-sm text-slate-500 mb-6 font-medium">Sei sicuro di voler eliminare definitivamente questo movimento?</p>
+                <h4 className="text-xl font-bold text-slate-900 mb-2">Elimina Movimento</h4>
+                <p className="text-sm text-slate-500 mb-8 font-medium px-4">Questa azione è irreversibile. Sei sicuro di voler procedere?</p>
                 <div className="flex gap-3 justify-center">
                     <button 
                         onClick={() => setConfirmDeleteId(null)} 
-                        className="flex-1 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors"
+                        className="flex-1 px-6 py-3.5 rounded-2xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors"
                     >
                         Annulla
                     </button>
                     <button 
                         onClick={confirmDelete} 
-                        className="flex-1 px-5 py-3 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all"
+                        className="flex-1 px-6 py-3.5 rounded-2xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all"
                     >
                         Elimina
                     </button>

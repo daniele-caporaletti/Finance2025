@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Transaction } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { PieChart as PieChartIcon, List as ListIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChartPie as PieChartIcon, List as ListIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { getCategoryColor } from './CategoryIcons';
 
 interface CategoryStatsProps { transactions: Transaction[]; }

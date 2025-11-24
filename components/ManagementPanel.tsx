@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { AccountTuple, Transaction, CreateTransactionPayload } from '../types';
-import { Wallet, Layers, Plus, Trash2, Check, X, Database, Loader2, Save, Info, Settings, ChevronRight, ChevronDown } from 'lucide-react';
+import { Wallet, Layers, Plus, Trash2, CircleCheck, X, Database, Loader2, Save, Info, Settings, ChevronRight, ChevronDown } from 'lucide-react';
 import { createTransaction, fetchExchangeRate } from '../services/api';
 import { CustomSelect } from './CustomSelect';
 import { CustomDatePicker } from './CustomDatePicker';
@@ -286,7 +286,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
                                                  autoFocus
                                                  onKeyDown={e => e.key === 'Enter' && handleAddSubcategory(catName)}
                                              />
-                                             <button onClick={() => handleAddSubcategory(catName)} className="p-1 bg-violet-600 text-white rounded-lg"><Check className="w-3 h-3"/></button>
+                                             <button onClick={() => handleAddSubcategory(catName)} className="p-1 bg-violet-600 text-white rounded-lg"><CircleCheck className="w-3 h-3"/></button>
                                              <button onClick={() => setAddingSubTo(null)} className="p-1 bg-slate-200 text-slate-500 rounded-lg"><X className="w-3 h-3"/></button>
                                          </div>
                                      ) : (
@@ -317,7 +317,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
                                 className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-violet-100"
                                 autoFocus
                             />
-                            <button onClick={handleAddCategory} className="p-2 bg-violet-600 text-white rounded-xl shadow-lg shadow-violet-200"><Check className="w-5 h-5"/></button>
+                            <button onClick={handleAddCategory} className="p-2 bg-violet-600 text-white rounded-xl shadow-lg shadow-violet-200"><CircleCheck className="w-5 h-5"/></button>
                             <button onClick={() => setAddingCategory(false)} className="p-2 bg-slate-100 text-slate-500 rounded-xl"><X className="w-5 h-5"/></button>
                         </div>
                     </div>
