@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { fetchTransactions, deleteTransaction } from './services/api';
-import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple } from './types';
+import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple, PeriodType } from './types';
 import { Filters } from './components/Filters';
 import { KPICards } from './components/KPICards';
 import { TransactionTable } from './components/TransactionTable';
@@ -128,6 +128,23 @@ const App: React.FC = () => {
     });
   }, [rawData, filters]);
 
+  const detailViewTransactions = useMemo(() => {
+    return rawData.filter(t => {
+      const tDate = new Date(t.date);
+      if (tDate.getFullYear() !== filters.selectedYear) return false;
+      
+      if (filters.periodType === 'MONTH') {
+        if (tDate.getMonth() !== filters.selectedMonth) return false;
+      }
+      
+      if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
+      if (filters.category !== 'ALL' && t.category !== filters.category) return false;
+      if (filters.eventTag !== 'ALL' && t.flag !== filters.eventTag) return false;
+      
+      return true;
+    });
+  }, [rawData, filters]);
+
   return (
     <div className="min-h-screen pb-20">
       
@@ -185,10 +202,12 @@ const App: React.FC = () => {
             {activeView ? (
                <KPIDetailView 
                   type={activeView}
-                  transactions={balanceTransactions}
+                  transactions={detailViewTransactions}
                   year={filters.selectedYear}
                   tagName={selectedTagDetail}
                   onClose={handleCloseDetail}
+                  periodType={filters.periodType}
+                  selectedMonth={filters.selectedMonth}
                />
             ) : (
                <div className="flex flex-col xl:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

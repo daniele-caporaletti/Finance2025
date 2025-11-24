@@ -1,6 +1,7 @@
 
+
 import React, { useMemo, useState } from 'react';
-import { Transaction } from '../types';
+import { Transaction, PeriodType } from '../types';
 import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Briefcase, Wallet, ArrowLeft, Tag } from 'lucide-react';
 import { getCategoryColor, getCategoryIcon } from './CategoryIcons';
 import { 
@@ -25,10 +26,12 @@ export type DetailType = 'BALANCE' | 'INCOME' | 'EXPENSE' | 'WORK' | 'TAG';
 
 interface KPIDetailViewProps {
   type: DetailType;
-  transactions: Transaction[]; // Should be full year transactions
+  transactions: Transaction[]; 
   year: number;
-  tagName?: string | null; // Optional, only for TAG type
+  tagName?: string | null; 
   onClose: () => void;
+  periodType: PeriodType;
+  selectedMonth: number;
 }
 
 const MONTHS_IT = [
@@ -64,8 +67,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions, year, tagName, onClose }) => {
-  const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
+export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions, year, tagName, onClose, periodType, selectedMonth }) => {
+  const [expandedMonth, setExpandedMonth] = useState<number | null>(
+    periodType === 'MONTH' ? selectedMonth : null
+  );
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null); // "UniqueId"
 
   const formatMoney = (val: number) => 
@@ -242,13 +247,17 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
 
   // --- RENDER HELPERS ---
   const getHeaderInfo = () => {
+    const periodText = periodType === 'MONTH' 
+        ? `${FULL_MONTHS_IT[selectedMonth]} ${year}`
+        : `Anno ${year}`;
+
     switch(type) {
-        case 'BALANCE': return { title: 'Riepilogo Annuale', color: 'bg-violet-100 text-violet-800', icon: <Wallet className="w-6 h-6"/> };
-        case 'EXPENSE': return { title: 'Dettaglio Uscite', color: 'bg-rose-100 text-rose-800', icon: <TrendingDown className="w-6 h-6"/> };
-        case 'INCOME': return { title: 'Dettaglio Entrate', color: 'bg-emerald-100 text-emerald-800', icon: <TrendingUp className="w-6 h-6"/> };
-        case 'WORK': return { title: 'Dettaglio Lavoro', color: 'bg-indigo-100 text-indigo-800', icon: <Briefcase className="w-6 h-6"/> };
-        case 'TAG': return { title: `Evento: ${tagName}`, color: 'bg-orange-100 text-orange-800', icon: <Tag className="w-6 h-6"/> };
-        default: return { title: 'Dettaglio', color: 'bg-slate-100', icon: null };
+        case 'BALANCE': return { title: 'Riepilogo Saldi', subtitle: periodText, color: 'bg-violet-100 text-violet-800', icon: <Wallet className="w-6 h-6"/> };
+        case 'EXPENSE': return { title: 'Dettaglio Uscite', subtitle: periodText, color: 'bg-rose-100 text-rose-800', icon: <TrendingDown className="w-6 h-6"/> };
+        case 'INCOME': return { title: 'Dettaglio Entrate', subtitle: periodText, color: 'bg-emerald-100 text-emerald-800', icon: <TrendingUp className="w-6 h-6"/> };
+        case 'WORK': return { title: 'Dettaglio Lavoro', subtitle: periodText, color: 'bg-indigo-100 text-indigo-800', icon: <Briefcase className="w-6 h-6"/> };
+        case 'TAG': return { title: `Evento: ${tagName}`, subtitle: `Analisi Evento - ${periodText}`, color: 'bg-orange-100 text-orange-800', icon: <Tag className="w-6 h-6"/> };
+        default: return { title: 'Dettaglio', subtitle: periodText, color: 'bg-slate-100', icon: null };
     }
   };
 
@@ -280,7 +289,7 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
                     <div>
                         <h2 className={`text-2xl font-bold ${header.color.split(' ')[1]}`}>{header.title}</h2>
                         <p className={`text-sm font-medium opacity-70 uppercase tracking-wide ${header.color.split(' ')[1]}`}>
-                            {type === 'TAG' ? 'Analisi Evento' : `Anno ${year}`}
+                           {header.subtitle}
                         </p>
                     </div>
                 </div>
