@@ -3,11 +3,18 @@ import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPa
 // Updated BASE_API_URL as per user request
 const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbzn74VPLfnp9F1lyi8ndyCma7QOlRJ9DbaEO_wPJXOBMLhwzxMmg7N6-ZArseurqRjl/exec';
 
+const createHeaders = (accessToken: string) => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${accessToken}`,
+});
+
 export const fetchTransactions = async (accessToken: string): Promise<Transaction[]> => {
   try {
-    // Pass token in URL query string
     const url = `${BASE_API_URL}?action=list&token=${encodeURIComponent(accessToken)}`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: createHeaders(accessToken),
+    });
     
     if (!response.ok) {
       throw new Error(`Error fetching data: ${response.statusText}`);
@@ -45,15 +52,11 @@ export const fetchExchangeRate = async (date: string, fromCurr: string): Promise
 
 export const createTransaction = async (payload: CreateTransactionPayload, accessToken: string): Promise<void> => {
   try {
-    // Pass token in URL query string
     const url = `${BASE_API_URL}?action=create&token=${encodeURIComponent(accessToken)}`;
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: {
-        // Update Content-Type as requested
-        'Content-Type': 'application/json',
-      },
+      headers: createHeaders(accessToken),
     });
 
     if (!response.ok) {
@@ -72,15 +75,11 @@ export const createTransaction = async (payload: CreateTransactionPayload, acces
 
 export const updateTransaction = async (payload: UpdateTransactionPayload, accessToken: string): Promise<void> => {
   try {
-    // Pass token in URL query string
     const url = `${BASE_API_URL}?action=update&token=${encodeURIComponent(accessToken)}`;
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: {
-        // Update Content-Type as requested
-        'Content-Type': 'application/json',
-      },
+      headers: createHeaders(accessToken),
     });
 
     if (!response.ok) {
@@ -99,15 +98,11 @@ export const updateTransaction = async (payload: UpdateTransactionPayload, acces
 
 export const deleteTransaction = async (id: number, accessToken: string): Promise<void> => {
   try {
-    // Pass token and ID in URL query string
     const url = `${BASE_API_URL}?action=delete&id=${id}&token=${encodeURIComponent(accessToken)}`;
     const response = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({}), // Sending an empty body for POST
-      headers: {
-        // Update Content-Type as requested
-        'Content-Type': 'application/json',
-      },
+      body: JSON.stringify({}), // Sending an empty body for POST as script may expect it
+      headers: createHeaders(accessToken),
     });
 
     if (!response.ok) {
