@@ -19,7 +19,7 @@ interface User {
   picture: string;
 }
 
-// FIX: Declare the google object to fix TypeScript error "Cannot find name 'google'".
+// Dichiara l'oggetto globale 'google' per risolvere l'errore TypeScript "Cannot find name 'google'".
 declare const google: any;
 
 const App: React.FC = () => {

@@ -12,7 +12,6 @@ interface ManagementPanelProps {
   setCategories: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   allTransactions: Transaction[];
   onDataChange: () => void;
-  // FIX: Add token to props for API calls
   token: string | null;
 }
 
@@ -118,7 +117,6 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
                  note: 'Saldo Iniziale',
                  valueChf: valueChf
              };
-             // FIX: Pass token to createTransaction
              await createTransaction(payload, token);
           });
           await Promise.all(promises);

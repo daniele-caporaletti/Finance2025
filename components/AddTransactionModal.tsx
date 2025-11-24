@@ -13,7 +13,6 @@ interface AddTransactionModalProps {
   accounts: AccountTuple[];
   categories: Record<string, string[]>;
   initialData?: Transaction | null;
-  // FIX: Add token to props for API calls
   token: string | null;
 }
 
@@ -142,7 +141,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             note,
             valueChf
         };
-        // FIX: Pass token to updateTransaction
         await updateTransaction(payload, token);
       } else {
         // CREATE
@@ -158,7 +156,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             note,
             valueChf
         };
-        // FIX: Pass token to createTransaction
         await createTransaction(payload, token);
       }
 
@@ -222,9 +219,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
         valueChf: inflowValueChf
       };
 
-      // FIX: Pass token to createTransaction
       await createTransaction(payloadOut, token);
-      // FIX: Pass token to createTransaction
       await createTransaction(payloadIn, token);
 
       onSuccess();
