@@ -1,4 +1,5 @@
 
+
 export interface Transaction {
   id: number;
   month: string;
@@ -44,6 +45,8 @@ export interface UpdateTransactionPayload {
 export interface ApiResponse {
   status: string;
   data: Transaction[];
+  // Fix: Add optional 'message' property to handle API error messages, resolving a type error in api.ts.
+  message?: string;
 }
 
 export type PeriodType = 'MONTH' | 'YEAR';
