@@ -2,8 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#7c3aed" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="description" content="Dashboard finanziaria personale per il tracciamento delle spese 2025." />
     <title>Finance 2025 Tracker</title>
     
@@ -13,25 +13,59 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700&display=swap');
+      
       body {
         font-family: 'DM Sans', sans-serif;
-        background-color: #fdfbff; /* MD3 Surface tint */
+        background-color: #f3f4f6;
+        background-image: 
+          radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
+          radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), 
+          radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
       }
-      /* Custom Scrollbar for a cleaner look */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+
+      /* Aurora Background */
+      .aurora-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background-color: #f8fafc;
+        background-image: 
+          radial-gradient(at 40% 20%, hsla(250,100%,94%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 0%, hsla(189,100%,96%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, hsla(341,100%,96%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 50%, hsla(270,100%,96%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, hsla(220,100%,96%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 100%, hsla(240,100%,96%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 0%, hsla(343,100%,96%,1) 0px, transparent 50%);
       }
-      ::-webkit-scrollbar-track {
+
+      /* Hide Scrollbar but allow scrolling */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Custom Scrollbar for specific containers */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
         background: transparent;
       }
-      ::-webkit-scrollbar-thumb {
-        background: #e2e8f0;
-        border-radius: 4px;
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.5);
+        border-radius: 10px;
       }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #cbd5e1;
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.8);
       }
     </style>
   <script type="importmap">
@@ -48,7 +82,8 @@
 }
 </script>
 </head>
-  <body class="text-slate-900">
+  <body class="text-slate-800 antialiased">
+    <div class="aurora-bg"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
