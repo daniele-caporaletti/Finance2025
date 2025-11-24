@@ -9,7 +9,6 @@ import { KPICards } from './components/KPICards';
 import { TransactionTable } from './components/TransactionTable';
 import { CategoryStats } from './components/CategoryStats';
 import { ManagementPanel } from './components/ManagementPanel';
-import { TagStats } from './components/TagStats';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { KPIDetailView, DetailType } from './components/KPIDetailView';
 import { LoginScreen } from './components/LoginScreen';
@@ -312,113 +311,127 @@ const App: React.FC = () => {
             <button onClick={handleLogout} className="w-full px-6 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors">Torna al Login</button>
           </div>
         ) : (
-          <>
-            {/* 1. DETAIL VIEW OVERLAY */}
-            {activeView ? (
-               <KPIDetailView 
-                  type={activeView}
-                  transactions={detailViewTransactions}
-                  year={filters.selectedYear}
-                  tagName={selectedTagDetail}
-                  onClose={() => { setActiveView(null); setSelectedTagDetail(null); }}
-                  onTagSelect={handleTagClick}
-                  periodType={filters.periodType}
-                  selectedMonth={filters.selectedMonth}
+          <div className="animate-in fade-in duration-500">
+            
+            {/* DESKTOP LAYOUT */}
+            <div className="hidden xl:block">
+               {/* Persistent Filters */}
+               <Filters 
+                   filters={filters} 
+                   setFilters={setFilters} 
+                   accounts={accounts}
+                   categories={categories}
+                   availableTags={availableTags}
                />
-            ) : (
-               /* 2. DASHBOARD CONTENT */
-               <div className="animate-in fade-in duration-500">
-                 
-                 {/* DESKTOP LAYOUT */}
-                 <div className="hidden xl:block">
-                    <Filters 
-                        filters={filters} 
-                        setFilters={setFilters} 
-                        accounts={accounts}
-                        categories={categories}
-                        availableTags={availableTags}
-                    />
-                    <KPICards 
-                        periodTransactions={filteredTransactions} 
-                        balanceTransactions={balanceTransactions} 
-                        activeView={activeView}
-                        onCardClick={handleCardClick}
-                        periodType={filters.periodType}
-                    />
-                    <div className="flex gap-8 mt-8">
-                        {/* Left: Table (70%) */}
-                        <div className="w-[70%] order-1">
-                            <TransactionTable 
-                                transactions={filteredTransactions} 
-                                onDelete={handleDelete} 
-                                onEdit={handleEdit} 
-                                apiKey={apiKey} 
-                            />
-                        </div>
-                        {/* Right: Widgets (30%) */}
-                        <div className="w-[30%] order-2 flex flex-col gap-6">
-                            <div className="sticky top-24 flex flex-col gap-6">
-                                <CategoryStats transactions={filteredTransactions} />
-                                <TagStats transactions={filteredTransactions} onTagClick={handleTagClick} />
-                                <ManagementPanel 
-                                    accounts={accounts} setAccounts={setAccounts}
-                                    categories={categories} setCategories={setCategories}
-                                    allTransactions={rawData} onDataChange={() => loadData(apiKey)} apiKey={apiKey}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                 </div>
 
-                 {/* MOBILE LAYOUT (TAB BASED) */}
-                 <div className="xl:hidden">
-                    
-                    {mobileTab === 'HOME' && (
-                        <div className="space-y-6">
-                            {/* KPI Scrollable Row */}
-                            <div className="-mx-4 px-4">
-                                <KPICards 
-                                    periodTransactions={filteredTransactions} 
-                                    balanceTransactions={balanceTransactions} 
-                                    activeView={activeView}
-                                    onCardClick={handleCardClick}
-                                    periodType={filters.periodType}
-                                />
-                            </div>
-                            <TransactionTable 
-                                transactions={filteredTransactions} 
-                                onDelete={handleDelete} 
-                                onEdit={handleEdit} 
-                                apiKey={apiKey} 
-                            />
-                        </div>
-                    )}
+               {/* Content View: Detail OR Dashboard */}
+               {activeView ? (
+                   <KPIDetailView 
+                      type={activeView}
+                      transactions={detailViewTransactions}
+                      year={filters.selectedYear}
+                      tagName={selectedTagDetail}
+                      onClose={() => { setActiveView(null); setSelectedTagDetail(null); }}
+                      onTagSelect={handleTagClick}
+                      periodType={filters.periodType}
+                      selectedMonth={filters.selectedMonth}
+                   />
+               ) : (
+                   <>
+                       <KPICards 
+                           periodTransactions={filteredTransactions} 
+                           balanceTransactions={balanceTransactions} 
+                           activeView={activeView}
+                           onCardClick={handleCardClick}
+                           periodType={filters.periodType}
+                       />
+                       <div className="flex gap-8 mt-8">
+                           {/* Left: Table (70%) */}
+                           <div className="w-[70%] order-1">
+                               <TransactionTable 
+                                   transactions={filteredTransactions} 
+                                   onDelete={handleDelete} 
+                                   onEdit={handleEdit} 
+                                   apiKey={apiKey} 
+                               />
+                           </div>
+                           {/* Right: Widgets (30%) */}
+                           <div className="w-[30%] order-2 flex flex-col gap-6">
+                               <div className="sticky top-24 flex flex-col gap-6">
+                                   <CategoryStats transactions={filteredTransactions} />
+                                   <ManagementPanel 
+                                       accounts={accounts} setAccounts={setAccounts}
+                                       categories={categories} setCategories={setCategories}
+                                       allTransactions={rawData} onDataChange={() => loadData(apiKey)} apiKey={apiKey}
+                                   />
+                               </div>
+                           </div>
+                       </div>
+                   </>
+               )}
+            </div>
 
-                    {mobileTab === 'ANALYTICS' && (
-                        <div className="space-y-6 pb-20">
-                            <Filters 
-                                filters={filters} setFilters={setFilters} 
-                                accounts={accounts} categories={categories} availableTags={availableTags}
-                            />
-                            <CategoryStats transactions={filteredTransactions} />
-                            <TagStats transactions={filteredTransactions} onTagClick={handleTagClick} />
-                        </div>
-                    )}
+            {/* MOBILE LAYOUT (TAB BASED) */}
+            <div className="xl:hidden">
+               {/* Detail View takes precedence on mobile if active */}
+               {activeView ? (
+                   <KPIDetailView 
+                      type={activeView}
+                      transactions={detailViewTransactions}
+                      year={filters.selectedYear}
+                      tagName={selectedTagDetail}
+                      onClose={() => { setActiveView(null); setSelectedTagDetail(null); }}
+                      onTagSelect={handleTagClick}
+                      periodType={filters.periodType}
+                      selectedMonth={filters.selectedMonth}
+                   />
+               ) : (
+                   <>
+                       {mobileTab === 'HOME' && (
+                           <div className="space-y-6">
+                               {/* KPI Scrollable Row */}
+                               <div className="-mx-4 px-4">
+                                   <KPICards 
+                                       periodTransactions={filteredTransactions} 
+                                       balanceTransactions={balanceTransactions} 
+                                       activeView={activeView}
+                                       onCardClick={handleCardClick}
+                                       periodType={filters.periodType}
+                                   />
+                               </div>
+                               <TransactionTable 
+                                   transactions={filteredTransactions} 
+                                   onDelete={handleDelete} 
+                                   onEdit={handleEdit} 
+                                   apiKey={apiKey} 
+                               />
+                           </div>
+                       )}
 
-                    {mobileTab === 'MANAGEMENT' && (
-                        <div className="pb-20">
-                            <ManagementPanel 
-                                accounts={accounts} setAccounts={setAccounts}
-                                categories={categories} setCategories={setCategories}
-                                allTransactions={rawData} onDataChange={() => loadData(apiKey)} apiKey={apiKey}
-                            />
-                        </div>
-                    )}
-                 </div>
+                       {mobileTab === 'ANALYTICS' && (
+                           <div className="space-y-6 pb-20">
+                               <Filters 
+                                   filters={filters} setFilters={setFilters} 
+                                   accounts={accounts} categories={categories} availableTags={availableTags}
+                               />
+                               <CategoryStats transactions={filteredTransactions} />
+                           </div>
+                       )}
 
-               </div>
-            )}
-          </>
+                       {mobileTab === 'MANAGEMENT' && (
+                           <div className="pb-20">
+                               <ManagementPanel 
+                                   accounts={accounts} setAccounts={setAccounts}
+                                   categories={categories} setCategories={setCategories}
+                                   allTransactions={rawData} onDataChange={() => loadData(apiKey)} apiKey={apiKey}
+                               />
+                           </div>
+                       )}
+                   </>
+               )}
+            </div>
+
+          </div>
         )}
       </main>
 

@@ -1,5 +1,4 @@
 
-
 import React, { useMemo, useState } from 'react';
 import { Transaction, PeriodType } from '../types';
 import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, Briefcase, Wallet, ArrowLeft, Tag } from 'lucide-react';
@@ -285,13 +284,13 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
   if (!data) return null;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
         
         {/* Navigation Bar */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
             <button 
                 onClick={onClose}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-600 hover:text-slate-900 rounded-full font-bold shadow-sm hover:shadow transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-white/70 backdrop-blur text-slate-600 hover:text-slate-900 rounded-full font-bold shadow-sm hover:shadow transition-all"
             >
                 <ArrowLeft className="w-4 h-4"/>
                 Torna alla Dashboard
@@ -306,9 +305,9 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
             )}
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col min-h-[600px]">
+        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/20 overflow-hidden flex flex-col min-h-[500px]">
             {/* Header */}
-            <div className={`px-8 py-6 border-b border-slate-50 flex items-center justify-between ${header.color.split(' ')[0]}`}>
+            <div className={`px-8 py-6 border-b border-slate-50/50 flex items-center justify-between ${header.color.split(' ')[0]}`}>
                 <div className="flex items-center gap-4">
                     <div className={`p-3 bg-white/60 rounded-2xl shadow-sm ${header.color.split(' ')[1]}`}>
                         {header.icon}
@@ -331,7 +330,7 @@ export const KPIDetailView: React.FC<KPIDetailViewProps> = ({ type, transactions
                 )}
             </div>
 
-            {/* --- CHARTS SECTION (NEW) --- */}
+            {/* --- CHARTS SECTION --- */}
             <div className="p-8 pb-0">
               {data.kind === 'TABLE' && (
                 <div className="h-64 w-full bg-slate-50/50 rounded-3xl p-4 border border-slate-100">

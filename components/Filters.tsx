@@ -19,7 +19,7 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters, accounts,
   const analyticsOptions = [{ label: "Tutti", value: "ALL" }, { label: "Solo Spese/Entrate", value: "NO_TRANSFER" }, { label: "Solo Lavoro", value: "WORK_ONLY" }];
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl p-4 rounded-[2rem] shadow-sm border border-white/20 mb-6">
+    <div className="bg-white/70 backdrop-blur-xl p-4 rounded-[2rem] shadow-sm border border-white/20 mb-6 relative z-50">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <CustomSelect value={filters.accountId} onChange={v => setFilters(p => ({...p, accountId: v}))} options={accountOptions} icon={<Wallet className="w-4 h-4"/>} className="h-10 text-xs" />
         <CustomSelect value={filters.category} onChange={v => setFilters(p => ({...p, category: v}))} options={categoryOptions} icon={<Layers className="w-4 h-4"/>} className="h-10 text-xs" />
