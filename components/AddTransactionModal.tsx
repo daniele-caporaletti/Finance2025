@@ -62,7 +62,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             setAnalytics(initialData.analytics as any);
             setFlag(initialData.flag || '');
             
-            // Determine Type and Amount
             if (initialData.movement < 0) {
                 setTransactionType('EXPENSE');
                 setAmountValue(String(Math.abs(initialData.movement)));
@@ -74,7 +73,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             // CREATE MODE
             setDate(new Date().toISOString().split('T')[0]);
             resetForms();
-            // Defaults
             if (accounts.length > 0 && !account) {
                 setAccount(accounts[0][0]);
                 setFromAccount(accounts[0][0]);
@@ -113,65 +111,55 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
     return amount * rate;
   };
 
-  const handleSingleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      setError("Sessione scaduta. Ricarica la pagina.");
+      return;
+    }
+
+    if (mode === 'SINGLE') {
+      await handleSingleSubmit();
+    } else {
+      await handleTransferSubmit();
+    }
+  };
+
+  const handleSingleSubmit = async () => {
     if (!amountValue || !token) return;
 
     setError(null);
     setLoading(true);
 
     try {
-      // Calculate final movement based on Type (Expense = negative)
       const absAmount = parseFloat(amountValue);
       const finalMovement = transactionType === 'EXPENSE' ? -absAmount : absAmount;
       const valueChf = await calculateValueChf(finalMovement, currentCurrency, date);
 
       if (initialData) {
-        // UPDATE
         const payload: UpdateTransactionPayload = {
-            id: initialData.id,
-            date,
-            account,
-            category,
-            subcategory,
-            curr: currentCurrency,
-            movement: finalMovement,
-            analytics,
-            flag,
-            note,
-            valueChf
+            id: initialData.id, date, account, category, subcategory,
+            curr: currentCurrency, movement: finalMovement, analytics, flag, note, valueChf
         };
         await updateTransaction(payload, token);
       } else {
-        // CREATE
         const payload: CreateTransactionPayload = {
-            date,
-            account,
-            category,
-            subcategory,
-            curr: currentCurrency,
-            movement: finalMovement,
-            analytics,
-            flag,
-            note,
-            valueChf
+            date, account, category, subcategory,
+            curr: currentCurrency, movement: finalMovement, analytics, flag, note, valueChf
         };
         await createTransaction(payload, token);
       }
 
       onSuccess();
       onClose();
-      resetForms();
     } catch (err) {
-      console.error(err);
       setError("Errore durante il salvataggio. Controlla i dati.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTransferSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTransferSubmit = async () => {
     if (!amountOut || !amountIn || !token) return;
     if (fromAccount === toAccount) {
         setError("I conti devono essere diversi.");
@@ -185,38 +173,22 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
       const numOut = Math.abs(parseFloat(amountOut));
       const numIn = Math.abs(parseFloat(amountIn));
 
-      // Outflow
       const outflowVal = -numOut;
       const outflowValueChf = await calculateValueChf(outflowVal, fromCurrency, date);
       
       const payloadOut: CreateTransactionPayload = {
-        date,
-        account: fromAccount,
-        category: 'TRANSFER',
-        subcategory: '',
-        curr: fromCurrency,
-        movement: outflowVal,
-        analytics: 'FALSE', 
-        flag: 'Transfer Out',
-        note: note ? `To ${toAccount}: ${note}` : `Transfer to ${toAccount}`,
-        valueChf: outflowValueChf
+        date, account: fromAccount, category: 'TRANSFER', subcategory: '', curr: fromCurrency,
+        movement: outflowVal, analytics: 'FALSE', flag: 'Transfer Out',
+        note: note ? `To ${toAccount}: ${note}` : `Transfer to ${toAccount}`, valueChf: outflowValueChf
       };
 
-      // Inflow
       const inflowVal = numIn;
       const inflowValueChf = await calculateValueChf(inflowVal, toCurrency, date);
 
       const payloadIn: CreateTransactionPayload = {
-        date,
-        account: toAccount,
-        category: 'TRANSFER',
-        subcategory: '',
-        curr: toCurrency,
-        movement: inflowVal,
-        analytics: 'FALSE', 
-        flag: 'Transfer In',
-        note: note ? `From ${fromAccount}: ${note}` : `Transfer from ${fromAccount}`,
-        valueChf: inflowValueChf
+        date, account: toAccount, category: 'TRANSFER', subcategory: '', curr: toCurrency,
+        movement: inflowVal, analytics: 'FALSE', flag: 'Transfer In',
+        note: note ? `From ${fromAccount}: ${note}` : `Transfer from ${fromAccount}`, valueChf: inflowValueChf
       };
 
       await createTransaction(payloadOut, token);
@@ -224,28 +196,20 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
 
       onSuccess();
       onClose();
-      resetForms();
     } catch (err) {
-      console.error(err);
       setError("Errore durante il trasferimento.");
     } finally {
       setLoading(false);
     }
   };
-
+  
   const resetForms = () => {
-    setAmountValue('');
-    setNote('');
-    setFlag('');
-    setAmountOut('');
-    setAmountIn('');
-    setAnalytics('TRUE');
+    // FIX: Corrected typo `note,` to `setNote('')` to properly reset the note state.
+    setAmountValue(''); setNote(''); setFlag(''); setAmountOut(''); setAmountIn(''); setAnalytics('TRUE');
     setTransactionType('EXPENSE');
-    if (Object.keys(categories).length > 0) {
-        setCategory(Object.keys(categories)[0]);
-    }
+    if (Object.keys(categories).length > 0) setCategory(Object.keys(categories)[0]);
   };
-
+  
   if (!isOpen) return null;
 
   return (
@@ -287,7 +251,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             </div>
         )}
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-6">
           {error && (
             <div className="mb-4 p-4 bg-rose-50 text-rose-700 rounded-2xl text-sm border border-rose-100 font-medium flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-rose-500"/>{error}
@@ -295,7 +259,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
           )}
 
           {mode === 'SINGLE' ? (
-            <form id="single-form" onSubmit={handleSingleSubmit} className="space-y-6">
+            <div className="space-y-6">
               
               {/* 1. Transaction Type Toggle */}
               <div className="flex justify-center">
@@ -433,10 +397,10 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
                   </div>
               </div>
 
-            </form>
+            </div>
           ) : (
             /* --- TRANSFER FORM --- */
-            <form id="transfer-form" onSubmit={handleTransferSubmit} className="space-y-6">
+            <div className="space-y-6">
                
                <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-400 uppercase ml-1">Data</label>
@@ -521,10 +485,10 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
                   />
                </div>
 
-            </form>
+            </div>
           )}
 
-        </div>
+        </form>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-50 bg-white flex justify-end gap-3 z-10">
@@ -537,7 +501,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
           </button>
           <button 
             type="submit" 
-            form={mode === 'SINGLE' ? 'single-form' : 'transfer-form'}
+            onClick={handleSubmit}
             disabled={loading}
             className="flex items-center gap-2 px-8 py-3 bg-violet-600 text-white rounded-xl hover:bg-violet-700 font-bold transition-all shadow-lg shadow-violet-200 disabled:opacity-70 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
           >

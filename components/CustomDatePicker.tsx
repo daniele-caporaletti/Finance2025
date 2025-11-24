@@ -1,19 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+// Fix: Import date-fns functions from their specific paths to resolve module resolution errors.
+// This is a common pattern for older versions of date-fns or specific build configurations.
 import { 
   format, 
   addMonths, 
-  subMonths, 
-  startOfMonth, 
   endOfMonth, 
-  startOfWeek, 
   endOfWeek, 
   eachDayOfInterval, 
   isSameMonth, 
   isSameDay, 
-  parseISO, 
   isValid 
 } from 'date-fns';
+import subMonths from 'date-fns/subMonths';
+import startOfMonth from 'date-fns/startOfMonth';
+import startOfWeek from 'date-fns/startOfWeek';
+import parseISO from 'date-fns/parseISO';
 
 interface CustomDatePickerProps {
   value: string; // YYYY-MM-DD

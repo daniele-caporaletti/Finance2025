@@ -1,20 +1,15 @@
 import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPayload } from '../types';
 
-// Updated BASE_API_URL as per user request
 const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbzn74VPLfnp9F1lyi8ndyCma7QOlRJ9DbaEO_wPJXOBMLhwzxMmg7N6-ZArseurqRjl/exec';
 
-const createHeaders = () => ({
-  'Content-Type': 'application/json',
-});
-
-// Generic POST request handler
 const postRequest = async (action: string, token: string, payload: object = {}) => {
-  try {
+   try {
     const response = await fetch(BASE_API_URL, {
       method: 'POST',
-      headers: createHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ action, token, payload }),
-      // Redirect is needed for Apps Script
       redirect: 'follow',
     });
 
@@ -28,31 +23,30 @@ const postRequest = async (action: string, token: string, payload: object = {}) 
       throw new Error(json.message || `API returned invalid status for action '${action}'`);
     }
 
-    return json;
+    return json.data;
 
   } catch (error) {
     console.error(`Failed during API action '${action}'`, error);
     throw error;
   }
+}
+
+export const fetchTransactions = async (token: string): Promise<Transaction[]> => {
+  const data = await postRequest('list', token);
+  return (data as Transaction[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-export const fetchTransactions = async (accessToken: string): Promise<Transaction[]> => {
-  const response = await postRequest('list', accessToken);
-  return response.data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+export const createTransaction = async (payload: CreateTransactionPayload, token: string): Promise<void> => {
+  await postRequest('create', token, payload);
 };
 
-export const createTransaction = async (payload: CreateTransactionPayload, accessToken: string): Promise<void> => {
-  await postRequest('create', accessToken, payload);
+export const updateTransaction = async (payload: UpdateTransactionPayload, token: string): Promise<void> => {
+  await postRequest('update', token, payload);
 };
 
-export const updateTransaction = async (payload: UpdateTransactionPayload, accessToken: string): Promise<void> => {
-  await postRequest('update', accessToken, payload);
+export const deleteTransaction = async (id: number, token: string): Promise<void> => {
+  await postRequest('delete', token, { id });
 };
-
-export const deleteTransaction = async (id: number, accessToken: string): Promise<void> => {
-  await postRequest('delete', accessToken, { id });
-};
-
 
 // This function is external and does not need changes
 export const fetchExchangeRate = async (date: string, fromCurr: string): Promise<number> => {

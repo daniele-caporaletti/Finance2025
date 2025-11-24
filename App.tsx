@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { fetchTransactions, deleteTransaction } from './services/api';
-import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple } from './types';
+import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple, User } from './types';
 import { Filters } from './components/Filters';
 import { KPICards } from './components/KPICards';
 import { TransactionTable } from './components/TransactionTable';
@@ -13,16 +13,9 @@ import { LoginScreen } from './components/LoginScreen';
 import { Loader2, Plus, LayoutDashboard, LogOut } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 
-// Fix: Add google to the Window interface to avoid TypeScript error 'Property 'google' does not exist on type 'Window''.
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
 const App: React.FC = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,16 +43,15 @@ const App: React.FC = () => {
   const loadData = async (accessToken: string) => {
     try {
       setLoading(true);
+      setError(null);
       const data = await fetchTransactions(accessToken);
       const data2025 = data.filter(t => new Date(t.date).getFullYear() === 2025);
       setRawData(data2025);
-      setError(null);
     } catch (err) {
-      setError("Impossibile caricare i dati. Assicurati di aver dato i permessi e che l'API sia online.");
-      // If auth error, log out
-      if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) {
-        handleLogout();
-      }
+      console.error(err);
+      setError("Impossibile caricare i dati. Verifica la connessione e che il tuo account Google abbia accesso allo script.");
+      // If loading fails, maybe the token is expired, log out
+      handleLogout();
     } finally {
       setLoading(false);
     }
@@ -67,46 +59,42 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (token) {
-      const decoded: any = jwtDecode(token);
-      if (decoded.exp * 1000 > Date.now()) {
-        setUser({ name: decoded.name, picture: decoded.picture });
+      try {
+        const decodedUser: User = jwtDecode(token);
+        setUser(decodedUser);
         loadData(token);
-      } else {
+      } catch (e) {
+        console.error("Invalid token", e);
         handleLogout();
       }
     } else {
-        setLoading(false);
+      setLoading(false);
     }
   }, [token]);
 
   const handleLoginSuccess = (response: any) => {
-    const credential = response.credential;
-    const decoded: any = jwtDecode(credential);
-    setToken(credential);
-    setUser({ name: decoded.name, picture: decoded.picture });
-    localStorage.setItem('authToken', credential);
+    const new_token = response.credential;
+    localStorage.setItem('authToken', new_token);
+    setToken(new_token);
   };
-
+  
   const handleLogout = () => {
+    localStorage.removeItem('authToken');
     setToken(null);
     setUser(null);
     setRawData([]);
-    localStorage.removeItem('authToken');
-    if (window.google) {
-        // Fix: Use window.google to access the google object, which is now typed globally.
-        window.google.accounts.id.disableAutoSelect();
-    }
+    // @ts-ignore
+    if(window.google) window.google.accounts.id.disableAutoSelect();
   };
 
   const handleDelete = async (id: number) => {
-    if (!token) return;
+    if(!token) return;
     try {
-      setLoading(true);
       await deleteTransaction(id, token);
+      // Optimistic update can be done here, or just reload
       await loadData(token);
     } catch (err) {
       setError("Errore durante l'eliminazione del movimento.");
-      setLoading(false);
     }
   };
 
@@ -121,13 +109,8 @@ const App: React.FC = () => {
   };
 
   const handleCardClick = (type: DetailType) => {
-      if (activeView === type) {
-          setActiveView(null);
-          setSelectedTagDetail(null);
-      } else {
-          setActiveView(type);
-          setSelectedTagDetail(null);
-      }
+      setActiveView(activeView === type ? null : type);
+      setSelectedTagDetail(null);
   };
 
   const handleTagClick = (tagName: string) => {
@@ -178,20 +161,17 @@ const App: React.FC = () => {
     return rawData.filter(t => {
       const tDate = new Date(t.date);
       if (tDate.getFullYear() !== filters.selectedYear) return false;
-      
       if (filters.periodType === 'MONTH') {
         if (tDate.getMonth() !== filters.selectedMonth) return false;
       }
-      
       if (filters.accountId !== 'ALL' && t.account !== filters.accountId) return false;
       if (filters.category !== 'ALL' && t.category !== filters.category) return false;
       if (filters.eventTag !== 'ALL' && t.flag !== filters.eventTag) return false;
-      
       return true;
     });
   }, [rawData, filters]);
 
-  if (!token) {
+  if (!token || !user) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
@@ -211,24 +191,16 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {user && (
-              <div className="flex items-center gap-3">
-                <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
-                <button 
-                  onClick={handleLogout}
-                  className="p-2 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-full transition-colors"
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4"/>
-                </button>
-              </div>
-            )}
+            <div className="text-right hidden sm:block">
+               <p className="text-sm font-bold text-slate-700">{user.name}</p>
+               <p className="text-xs text-slate-500">{user.email}</p>
+            </div>
             <button 
-              onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
-              className="hidden md:flex items-center gap-2 bg-violet-600 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-violet-200 hover:bg-violet-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+              onClick={handleLogout}
+              className="p-2.5 bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors"
+              title="Logout"
             >
-              <Plus className="w-5 h-5" />
-              Aggiungi Movimento
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -278,6 +250,7 @@ const App: React.FC = () => {
                         transactions={filteredTransactions} 
                         onDelete={handleDelete}
                         onEdit={handleEdit}
+                        token={token}
                       />
                   </div>
                   <div className="w-full xl:w-1/4 order-1 xl:order-2">
@@ -289,7 +262,7 @@ const App: React.FC = () => {
                                   categories={categories}
                                   setCategories={setCategories}
                                   allTransactions={rawData}
-                                  onDataChange={() => token && loadData(token)}
+                                  onDataChange={() => loadData(token)}
                                   token={token}
                               />
                           </div>
@@ -308,7 +281,7 @@ const App: React.FC = () => {
 
       <button
         onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
-        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-violet-600 text-white rounded-2xl shadow-xl shadow-violet-300 flex items-center justify-center z-50 active:scale-95 transition-transform"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 text-white rounded-2xl shadow-xl shadow-violet-300 flex items-center justify-center z-50 active:scale-95 transition-transform"
       >
         <Plus className="w-8 h-8" />
       </button>
@@ -316,7 +289,7 @@ const App: React.FC = () => {
       <AddTransactionModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onSuccess={() => token && loadData(token)}
+        onSuccess={() => loadData(token)}
         accounts={accounts}
         categories={categories}
         initialData={editingTransaction}

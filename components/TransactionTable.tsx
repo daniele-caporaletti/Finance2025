@@ -8,16 +8,16 @@ interface TransactionTableProps {
   transactions: Transaction[];
   onDelete: (id: number) => Promise<void>;
   onEdit: (transaction: Transaction) => void;
+  token: string | null;
 }
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, onDelete, onEdit }) => {
+export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, onDelete, onEdit, token }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const itemsPerPage = 20;
 
-  // Search logic (Client side)
   const filteredData = transactions.filter(t => 
     t.note.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,7 +56,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
   };
 
   const handleConfirmDelete = async () => {
-    if (confirmDeleteId !== null) {
+    if (confirmDeleteId !== null && token) {
       const id = confirmDeleteId;
       setConfirmDeleteId(null);
       setDeletingId(id);
@@ -67,7 +67,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative">
-      {/* Header & Search */}
       <div className="px-6 py-5 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h3 className="text-xl font-bold text-slate-800">Ultimi Movimenti</h3>
         <div className="relative w-full sm:w-72">
@@ -84,7 +83,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-600">
           <thead className="bg-slate-50/50 text-slate-500 font-bold uppercase text-xs tracking-wider">
@@ -100,8 +98,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
           <tbody className="divide-y divide-slate-50">
             {paginatedData.map((t) => (
               <tr key={t.id} className="group hover:bg-slate-50/80 transition-colors">
-                
-                {/* DATE */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-3">
                       <div className="flex flex-col items-center justify-center w-10 h-10 bg-slate-100 rounded-xl">
@@ -114,8 +110,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                       </span>
                   </div>
                 </td>
-
-                {/* DETAILS (Account + Note + Flag) */}
                 <td className="px-6 py-4">
                    <div className="flex flex-col gap-1.5">
                        <span className="font-bold text-slate-700">{t.account}</span>
@@ -130,8 +124,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                        {t.note && <p className="text-xs text-slate-500 line-clamp-1 italic max-w-[200px]">{t.note}</p>}
                    </div>
                 </td>
-
-                {/* CATEGORY */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${getCategoryColor(t.category)}`}>
@@ -145,18 +137,12 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                       </div>
                   </div>
                 </td>
-
-                {/* AMOUNT ORIGINAL */}
                 <td className={`px-6 py-4 text-right whitespace-nowrap font-medium ${t.movement < 0 ? 'text-slate-500' : 'text-emerald-600'}`}>
                   {formatCurrency(t.movement, t.curr)}
                 </td>
-
-                {/* AMOUNT CHF */}
                 <td className={`px-6 py-4 text-right whitespace-nowrap font-bold text-base ${t.valueChf < 0 ? 'text-slate-800' : 'text-emerald-600'}`}>
                   {formatCurrency(t.valueChf, 'CHF')}
                 </td>
-
-                {/* ACTIONS */}
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
@@ -196,7 +182,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="p-4 border-t border-slate-50 flex items-center justify-between">
           <button
@@ -219,7 +204,6 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
         </div>
       )}
 
-      {/* Custom Confirmation Modal */}
       {confirmDeleteId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
             <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 animate-in fade-in zoom-in duration-200">

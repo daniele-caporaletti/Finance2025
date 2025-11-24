@@ -44,8 +44,7 @@ export interface UpdateTransactionPayload {
 
 export interface ApiResponse {
   status: string;
-  data: Transaction[];
-  // Fix: Add optional 'message' property to handle API error messages, resolving a type error in api.ts.
+  data: any;
   message?: string;
 }
 
@@ -62,6 +61,12 @@ export interface FilterState {
 }
 
 export type AccountTuple = [string, string]; // [Name, Currency]
+
+export interface User {
+  name: string;
+  email: string;
+  picture: string;
+}
 
 export const INITIAL_ACCOUNTS: AccountTuple[] = [
   ["Cash-CHF", "CHF"],
