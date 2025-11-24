@@ -10,7 +10,7 @@ import { AddTransactionModal } from './components/AddTransactionModal';
 import { KPIDetailView, DetailType } from './components/KPIDetailView';
 import { TagStats } from './components/TagStats';
 import { LoginScreen } from './components/LoginScreen';
-import { Loader2, Plus, LayoutDashboard, LogOut } from 'lucide-react';
+import { Loader2, Plus, LayoutDashboard, LogOut, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 
 const App: React.FC = () => {
   // Store API Key instead of JWT token
@@ -25,6 +25,9 @@ const App: React.FC = () => {
   
   const [activeView, setActiveView] = useState<DetailType | null>(null);
   const [selectedTagDetail, setSelectedTagDetail] = useState<string | null>(null);
+
+  // Mobile state for widget visibility
+  const [showWidgetsMobile, setShowWidgetsMobile] = useState(false);
 
   const [accounts, setAccounts] = useState<AccountTuple[]>(INITIAL_ACCOUNTS);
   const [categories, setCategories] = useState<Record<string, string[]>>(INITIAL_CATEGORIES);
@@ -49,8 +52,6 @@ const App: React.FC = () => {
     } catch (err) {
       console.error(err);
       setError("Chiave non valida o errore di connessione.");
-      // Optional: Auto logout on failure if desired, but maybe just show error first
-      // handleLogout(); 
     } finally {
       setLoading(false);
     }
@@ -162,24 +163,24 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 bg-[#fdfbff]">
       
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100">
-        <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-violet-600 p-2 rounded-xl text-white shadow-lg shadow-violet-200">
-               <LayoutDashboard className="w-6 h-6" />
+               <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-800">Finance 2025</h1>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Dashboard Finanziaria</p>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800">Finance 2025</h1>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium uppercase tracking-wider hidden sm:block">Dashboard Finanziaria</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 rounded-full transition-colors text-sm font-bold"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 rounded-full transition-colors text-xs sm:text-sm font-bold"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
@@ -189,7 +190,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 mt-8">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 mt-6 sm:mt-8">
         
         {loading && rawData.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -216,6 +217,7 @@ const App: React.FC = () => {
               balanceTransactions={balanceTransactions} 
               activeView={activeView}
               onCardClick={handleCardClick}
+              periodType={filters.periodType}
             />
             {activeView ? (
                <KPIDetailView 
@@ -229,7 +231,23 @@ const App: React.FC = () => {
                />
             ) : (
                <div className="flex flex-col xl:flex-row gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="w-full xl:w-3/4 order-2 xl:order-1">
+                  
+                  {/* Main Content: Table (Priority on Mobile) */}
+                  <div className="w-full xl:w-3/4">
+                      {/* Mobile Toggle for Widgets */}
+                      <div className="xl:hidden mb-4">
+                        <button 
+                          onClick={() => setShowWidgetsMobile(!showWidgetsMobile)}
+                          className="w-full flex items-center justify-between px-5 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-bold active:scale-[0.99] transition-transform"
+                        >
+                          <div className="flex items-center gap-3">
+                            <SlidersHorizontal className="w-5 h-5 text-violet-600" />
+                            <span>{showWidgetsMobile ? 'Nascondi' : 'Mostra'} Analisi e Gestione</span>
+                          </div>
+                          {showWidgetsMobile ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                        </button>
+                      </div>
+
                       <TransactionTable 
                         transactions={filteredTransactions} 
                         onDelete={handleDelete}
@@ -237,7 +255,9 @@ const App: React.FC = () => {
                         apiKey={apiKey}
                       />
                   </div>
-                  <div className="w-full xl:w-1/4 order-1 xl:order-2">
+
+                  {/* Sidebar: Widgets (Sticky on Desktop, Collapsible on Mobile) */}
+                  <div className={`w-full xl:w-1/4 ${showWidgetsMobile ? 'block' : 'hidden xl:block'}`}>
                       <div className="sticky top-24 flex flex-col gap-6">
                           <div className="h-[500px]">
                               <ManagementPanel 
