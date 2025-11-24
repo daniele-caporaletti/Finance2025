@@ -9,24 +9,9 @@ import { ManagementPanel } from './components/ManagementPanel';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { KPIDetailView, DetailType } from './components/KPIDetailView';
 import { TagStats } from './components/TagStats';
-import { LoginScreen } from './components/LoginScreen';
-import { Loader2, Plus, LayoutDashboard, LogOut } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
-
-interface User {
-  name: string;
-  email: string;
-  picture: string;
-}
-
-// Dichiara l'oggetto globale 'google' per risolvere l'errore TypeScript "Cannot find name 'google'".
-declare const google: any;
+import { Loader2, Plus, LayoutDashboard } from 'lucide-react';
 
 const App: React.FC = () => {
-  // Auth State
-  const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
-  const [user, setUser] = useState<User | null>(null);
-
   const [rawData, setRawData] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,60 +35,29 @@ const App: React.FC = () => {
     eventTag: 'ALL'
   });
 
-  const handleLoginSuccess = (credentialResponse: any) => {
-    const idToken = credentialResponse.credential;
-    localStorage.setItem('authToken', idToken);
-    setToken(idToken);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setToken(null);
-    setUser(null);
-    google.accounts.id.disableAutoSelect();
-  };
-
-  const loadData = async (accessToken: string) => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await fetchTransactions(accessToken);
+      const data = await fetchTransactions();
       const data2025 = data.filter(t => new Date(t.date).getFullYear() === 2025);
       setRawData(data2025);
       setError(null);
     } catch (err) {
-      if (err instanceof Error && err.message === 'Unauthorized') {
-         setError("Non autorizzato. Effettua nuovamente il login.");
-         handleLogout();
-      } else {
-         setError("Impossibile caricare i dati. Riprova più tardi.");
-      }
+      setError("Impossibile caricare i dati. L'API potrebbe essere offline. Riprova più tardi.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      try {
-        const decoded: any = jwtDecode(token);
-        setUser({ name: decoded.name, email: decoded.email, picture: decoded.picture });
-        loadData(token);
-      } catch (e) {
-        console.error("Invalid token", e);
-        handleLogout();
-      }
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
-
+    loadData();
+  }, []);
 
   const handleDelete = async (id: number) => {
-    if (!token) return;
     try {
       setLoading(true);
-      await deleteTransaction(id, token);
-      await loadData(token);
+      await deleteTransaction(id);
+      await loadData();
     } catch (err) {
       setError("Errore durante l'eliminazione del movimento.");
       setLoading(false);
@@ -174,10 +128,6 @@ const App: React.FC = () => {
     });
   }, [rawData, filters]);
 
-  if (!token || !user) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
     <div className="min-h-screen pb-20">
       
@@ -201,15 +151,6 @@ const App: React.FC = () => {
               <Plus className="w-5 h-5" />
               Aggiungi Movimento
             </button>
-            <div className="group relative">
-                <img src={user.picture} alt="User" className="w-10 h-10 rounded-full cursor-pointer"/>
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
-                    <button onClick={handleLogout} className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg">
-                        <LogOut className="w-4 h-4" />
-                        Logout
-                    </button>
-                </div>
-            </div>
           </div>
         </div>
       </header>
@@ -267,8 +208,7 @@ const App: React.FC = () => {
                                   categories={categories}
                                   setCategories={setCategories}
                                   allTransactions={rawData}
-                                  onDataChange={() => loadData(token!)}
-                                  token={token}
+                                  onDataChange={loadData}
                               />
                           </div>
                           <CategoryStats transactions={filteredTransactions} />
@@ -294,11 +234,10 @@ const App: React.FC = () => {
       <AddTransactionModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onSuccess={() => loadData(token!)}
+        onSuccess={loadData}
         accounts={accounts}
         categories={categories}
         initialData={editingTransaction}
-        token={token}
       />
     </div>
   );

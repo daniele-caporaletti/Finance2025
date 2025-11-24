@@ -13,13 +13,12 @@ interface AddTransactionModalProps {
   accounts: AccountTuple[];
   categories: Record<string, string[]>;
   initialData?: Transaction | null;
-  token: string | null;
 }
 
 type Mode = 'SINGLE' | 'TRANSFER';
 type TransactionType = 'EXPENSE' | 'INCOME';
 
-export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose, onSuccess, accounts, categories, initialData, token }) => {
+export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen, onClose, onSuccess, accounts, categories, initialData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('SINGLE');
@@ -115,7 +114,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
 
   const handleSingleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amountValue || !token) return;
+    if (!amountValue) return;
 
     setError(null);
     setLoading(true);
@@ -141,7 +140,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             note,
             valueChf
         };
-        await updateTransaction(payload, token);
+        await updateTransaction(payload);
       } else {
         // CREATE
         const payload: CreateTransactionPayload = {
@@ -156,7 +155,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
             note,
             valueChf
         };
-        await createTransaction(payload, token);
+        await createTransaction(payload);
       }
 
       onSuccess();
@@ -172,7 +171,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
 
   const handleTransferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amountOut || !amountIn || !token) return;
+    if (!amountOut || !amountIn) return;
     if (fromAccount === toAccount) {
         setError("I conti devono essere diversi.");
         return;
@@ -219,8 +218,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
         valueChf: inflowValueChf
       };
 
-      await createTransaction(payloadOut, token);
-      await createTransaction(payloadIn, token);
+      await createTransaction(payloadOut);
+      await createTransaction(payloadIn);
 
       onSuccess();
       onClose();

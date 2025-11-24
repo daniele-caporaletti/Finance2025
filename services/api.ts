@@ -2,20 +2,14 @@ import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPa
 
 const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbwn0HQvpae92CTQau13v_rJ05MGiGjzXmztndndDUajGmBygkPIlNoLPrAlRExBDlIi/exec';
 
-const createAuthHeaders = (token: string): HeadersInit => ({
-  'Authorization': `Bearer ${token}`,
+const POST_HEADERS: HeadersInit = {
   'Content-Type': 'text/plain;charset=utf-8',
-});
+};
 
-export const fetchTransactions = async (token: string): Promise<Transaction[]> => {
+export const fetchTransactions = async (): Promise<Transaction[]> => {
   try {
-    const response = await fetch(`${BASE_API_URL}?action=list`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      }
-    });
+    const response = await fetch(`${BASE_API_URL}?action=list`);
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Unauthorized");
       throw new Error(`Error fetching data: ${response.statusText}`);
     }
     const json: ApiResponse = await response.json();
@@ -49,16 +43,15 @@ export const fetchExchangeRate = async (date: string, fromCurr: string): Promise
   }
 };
 
-export const createTransaction = async (payload: CreateTransactionPayload, token: string): Promise<void> => {
+export const createTransaction = async (payload: CreateTransactionPayload): Promise<void> => {
   try {
     const response = await fetch(`${BASE_API_URL}?action=create`, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: createAuthHeaders(token),
+      headers: POST_HEADERS,
     });
 
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Unauthorized");
       throw new Error(`Error creating transaction: ${response.statusText}`);
     }
 
@@ -72,16 +65,15 @@ export const createTransaction = async (payload: CreateTransactionPayload, token
   }
 };
 
-export const updateTransaction = async (payload: UpdateTransactionPayload, token: string): Promise<void> => {
+export const updateTransaction = async (payload: UpdateTransactionPayload): Promise<void> => {
   try {
     const response = await fetch(`${BASE_API_URL}?action=update`, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: createAuthHeaders(token),
+      headers: POST_HEADERS,
     });
 
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Unauthorized");
       throw new Error(`Error updating transaction: ${response.statusText}`);
     }
 
@@ -95,16 +87,15 @@ export const updateTransaction = async (payload: UpdateTransactionPayload, token
   }
 };
 
-export const deleteTransaction = async (id: number, token: string): Promise<void> => {
+export const deleteTransaction = async (id: number): Promise<void> => {
   try {
     const response = await fetch(`${BASE_API_URL}?action=delete&id=${id}`, {
       method: 'POST',
       body: JSON.stringify({}), 
-      headers: createAuthHeaders(token),
+      headers: POST_HEADERS,
     });
 
     if (!response.ok) {
-       if (response.status === 401) throw new Error("Unauthorized");
       throw new Error(`Error deleting transaction: ${response.statusText}`);
     }
 
