@@ -3,17 +3,20 @@ import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPa
 // Updated BASE_API_URL as per user request
 const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbzn74VPLfnp9F1lyi8ndyCma7QOlRJ9DbaEO_wPJXOBMLhwzxMmg7N6-ZArseurqRjl/exec';
 
-const createHeaders = (accessToken: string) => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${accessToken}`,
+// NOTE: We use 'text/plain' to avoid the browser sending an OPTIONS preflight request (CORS).
+// Google Apps Script parses the body regardless of the content-type header.
+const createHeaders = () => ({
+  'Content-Type': 'text/plain;charset=utf-8',
 });
 
 export const fetchTransactions = async (accessToken: string): Promise<Transaction[]> => {
   try {
+    // Token is passed ONLY in the URL to avoid complex headers
     const url = `${BASE_API_URL}?action=list&token=${encodeURIComponent(accessToken)}`;
+    
+    // GET requests without custom headers are "Simple Requests" and don't trigger preflight issues
     const response = await fetch(url, {
       method: 'GET',
-      headers: createHeaders(accessToken),
     });
     
     if (!response.ok) {
@@ -53,10 +56,13 @@ export const fetchExchangeRate = async (date: string, fromCurr: string): Promise
 export const createTransaction = async (payload: CreateTransactionPayload, accessToken: string): Promise<void> => {
   try {
     const url = `${BASE_API_URL}?action=create&token=${encodeURIComponent(accessToken)}`;
+    
+    // We send JSON stringified body but with text/plain header.
+    // This prevents the browser from sending an OPTIONS request (CORS Preflight) which GAS often fails to handle.
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: createHeaders(accessToken),
+      headers: createHeaders(),
     });
 
     if (!response.ok) {
@@ -79,7 +85,7 @@ export const updateTransaction = async (payload: UpdateTransactionPayload, acces
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: createHeaders(accessToken),
+      headers: createHeaders(),
     });
 
     if (!response.ok) {
@@ -101,8 +107,8 @@ export const deleteTransaction = async (id: number, accessToken: string): Promis
     const url = `${BASE_API_URL}?action=delete&id=${id}&token=${encodeURIComponent(accessToken)}`;
     const response = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({}), // Sending an empty body for POST as script may expect it
-      headers: createHeaders(accessToken),
+      body: JSON.stringify({}),
+      headers: createHeaders(),
     });
 
     if (!response.ok) {
