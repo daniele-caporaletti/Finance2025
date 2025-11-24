@@ -12,7 +12,7 @@ interface ManagementPanelProps {
   setCategories: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
   allTransactions: Transaction[];
   onDataChange: () => void;
-  token: string | null;
+  apiKey: string | null;
 }
 
 export const ManagementPanel: React.FC<ManagementPanelProps> = ({
@@ -22,7 +22,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
   setCategories,
   allTransactions,
   onDataChange,
-  token,
+  apiKey,
 }) => {
   const [activeTab, setActiveTab] = useState<'ACCOUNTS' | 'CATEGORIES'>('ACCOUNTS');
 
@@ -81,7 +81,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
   };
 
   const executeInitSave = async () => {
-      if (!token) {
+      if (!apiKey) {
           setAlertMessage("Sessione scaduta, ricarica la pagina.");
           setIsInitializing(false);
           return;
@@ -101,7 +101,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
                  date: initDate, account: name, curr: curr, movement: amount, category: 'TRANSFER',
                  subcategory: '', analytics: 'FALSE', flag: 'INIT', note: 'Saldo Iniziale', valueChf
              };
-             await createTransaction(payload, token);
+             await createTransaction(payload, apiKey);
           });
           await Promise.all(promises);
           setInitBalances({});

@@ -1,18 +1,8 @@
 import { ApiResponse, Transaction, CreateTransactionPayload, UpdateTransactionPayload } from '../types';
 
-const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbzn74VPLfnp9F1lyi8ndyCma7QOlRJ9DbaEO_wPJXOBMLhwzxMmg7N6-ZArseurqRjl/exec';
+const BASE_API_URL = 'https://script.google.com/macros/s/AKfycbycBqIfLZ5fNO9MBuw9NawYXsgMqU0NwStPS9FEFM9YJgrUUyT_k39gCnwsOuyejxRe/exec';
 
-const postRequest = async (action: string, token: string, payload: object = {}) => {
-   try {
-    const response = await fetch(BASE_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action, token, payload }),
-      redirect: 'follow',
-    });
-
+const handleResponse = async (response: Response, action: string) => {
     if (!response.ok) {
       throw new Error(`Error with action '${action}': ${response.statusText}`);
     }
@@ -24,28 +14,73 @@ const postRequest = async (action: string, token: string, payload: object = {}) 
     }
 
     return json.data;
+};
 
+export const fetchTransactions = async (apiKey: string): Promise<Transaction[]> => {
+  // GET request for list, passing key in query param
+  const url = `${BASE_API_URL}?action=list&key=${encodeURIComponent(apiKey)}`;
+  try {
+    const response = await fetch(url, { 
+      method: 'GET'
+    });
+    const data = await handleResponse(response, 'list');
+    return (data as Transaction[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   } catch (error) {
-    console.error(`Failed during API action '${action}'`, error);
+    console.error(`Failed during API action 'list'`, error);
     throw error;
   }
-}
-
-export const fetchTransactions = async (token: string): Promise<Transaction[]> => {
-  const data = await postRequest('list', token);
-  return (data as Transaction[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-export const createTransaction = async (payload: CreateTransactionPayload, token: string): Promise<void> => {
-  await postRequest('create', token, payload);
+export const createTransaction = async (payload: CreateTransactionPayload, apiKey: string): Promise<void> => {
+  // POST request for create, passing key in query param, data in body with JSON header
+  const url = `${BASE_API_URL}?action=create&key=${encodeURIComponent(apiKey)}`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    await handleResponse(response, 'create');
+  } catch (error) {
+    console.error(`Failed during API action 'create'`, error);
+    throw error;
+  }
 };
 
-export const updateTransaction = async (payload: UpdateTransactionPayload, token: string): Promise<void> => {
-  await postRequest('update', token, payload);
+export const updateTransaction = async (payload: UpdateTransactionPayload, apiKey: string): Promise<void> => {
+  const url = `${BASE_API_URL}?action=update&key=${encodeURIComponent(apiKey)}`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    await handleResponse(response, 'update');
+  } catch (error) {
+    console.error(`Failed during API action 'update'`, error);
+    throw error;
+  }
 };
 
-export const deleteTransaction = async (id: number, token: string): Promise<void> => {
-  await postRequest('delete', token, { id });
+export const deleteTransaction = async (id: number, apiKey: string): Promise<void> => {
+  const url = `${BASE_API_URL}?action=delete&key=${encodeURIComponent(apiKey)}`;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id })
+    });
+    await handleResponse(response, 'delete');
+  } catch (error) {
+    console.error(`Failed during API action 'delete'`, error);
+    throw error;
+  }
 };
 
 // This function is external and does not need changes

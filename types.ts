@@ -1,5 +1,3 @@
-
-
 export interface Transaction {
   id: number;
   month: string;
@@ -61,12 +59,6 @@ export interface FilterState {
 }
 
 export type AccountTuple = [string, string]; // [Name, Currency]
-
-export interface User {
-  name: string;
-  email: string;
-  picture: string;
-}
 
 export const INITIAL_ACCOUNTS: AccountTuple[] = [
   ["Cash-CHF", "CHF"],

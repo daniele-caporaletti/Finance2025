@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { fetchTransactions, deleteTransaction } from './services/api';
-import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple, User } from './types';
+import { Transaction, FilterState, INITIAL_ACCOUNTS, INITIAL_CATEGORIES, AccountTuple } from './types';
 import { Filters } from './components/Filters';
 import { KPICards } from './components/KPICards';
 import { TransactionTable } from './components/TransactionTable';
@@ -11,14 +11,13 @@ import { KPIDetailView, DetailType } from './components/KPIDetailView';
 import { TagStats } from './components/TagStats';
 import { LoginScreen } from './components/LoginScreen';
 import { Loader2, Plus, LayoutDashboard, LogOut } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
 
 const App: React.FC = () => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
-  const [user, setUser] = useState<User | null>(null);
+  // Store API Key instead of JWT token
+  const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('finance_apikey'));
 
   const [rawData, setRawData] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,59 +39,46 @@ const App: React.FC = () => {
     eventTag: 'ALL'
   });
 
-  const loadData = async (accessToken: string) => {
+  const loadData = async (key: string) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTransactions(accessToken);
+      const data = await fetchTransactions(key);
       const data2025 = data.filter(t => new Date(t.date).getFullYear() === 2025);
       setRawData(data2025);
     } catch (err) {
       console.error(err);
-      setError("Impossibile caricare i dati. Verifica la connessione e che il tuo account Google abbia accesso allo script.");
-      // If loading fails, maybe the token is expired, log out
-      handleLogout();
+      setError("Chiave non valida o errore di connessione.");
+      // Optional: Auto logout on failure if desired, but maybe just show error first
+      // handleLogout(); 
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) {
-      try {
-        const decodedUser: User = jwtDecode(token);
-        setUser(decodedUser);
-        loadData(token);
-      } catch (e) {
-        console.error("Invalid token", e);
-        handleLogout();
-      }
-    } else {
-      setLoading(false);
+    if (apiKey) {
+      loadData(apiKey);
     }
-  }, [token]);
+  }, [apiKey]);
 
-  const handleLoginSuccess = (response: any) => {
-    const new_token = response.credential;
-    localStorage.setItem('authToken', new_token);
-    setToken(new_token);
+  const handleLogin = (key: string) => {
+    localStorage.setItem('finance_apikey', key);
+    setApiKey(key);
   };
   
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setToken(null);
-    setUser(null);
+    localStorage.removeItem('finance_apikey');
+    setApiKey(null);
     setRawData([]);
-    // @ts-ignore
-    if(window.google) window.google.accounts.id.disableAutoSelect();
+    setError(null);
   };
 
   const handleDelete = async (id: number) => {
-    if(!token) return;
+    if(!apiKey) return;
     try {
-      await deleteTransaction(id, token);
-      // Optimistic update can be done here, or just reload
-      await loadData(token);
+      await deleteTransaction(id, apiKey);
+      await loadData(apiKey);
     } catch (err) {
       setError("Errore durante l'eliminazione del movimento.");
     }
@@ -171,8 +157,8 @@ const App: React.FC = () => {
     });
   }, [rawData, filters]);
 
-  if (!token || !user) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
+  if (!apiKey) {
+    return <LoginScreen onLogin={handleLogin} />;
   }
 
   return (
@@ -191,16 +177,13 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-               <p className="text-sm font-bold text-slate-700">{user.name}</p>
-               <p className="text-xs text-slate-500">{user.email}</p>
-            </div>
             <button 
               onClick={handleLogout}
-              className="p-2.5 bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 rounded-full transition-colors text-sm font-bold"
               title="Logout"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Esci</span>
             </button>
           </div>
         </div>
@@ -214,9 +197,10 @@ const App: React.FC = () => {
             <p className="text-lg font-medium text-slate-500">Sto caricando i tuoi dati...</p>
           </div>
         ) : error ? (
-          <div className="max-w-md mx-auto mt-20 bg-rose-50 text-rose-800 p-6 rounded-3xl border border-rose-100 text-center">
-            <p className="font-bold mb-2">Ops, qualcosa è andato storto!</p>
-            <p>{error}</p>
+          <div className="max-w-md mx-auto mt-20 bg-rose-50 text-rose-800 p-8 rounded-3xl border border-rose-100 text-center shadow-sm">
+            <p className="font-bold text-lg mb-2">Accesso Negato</p>
+            <p className="mb-6 opacity-80">{error}</p>
+            <button onClick={handleLogout} className="px-6 py-2 bg-white text-rose-600 font-bold rounded-xl shadow-sm hover:bg-rose-50">Riprova Login</button>
           </div>
         ) : (
           <>
@@ -250,7 +234,7 @@ const App: React.FC = () => {
                         transactions={filteredTransactions} 
                         onDelete={handleDelete}
                         onEdit={handleEdit}
-                        token={token}
+                        apiKey={apiKey}
                       />
                   </div>
                   <div className="w-full xl:w-1/4 order-1 xl:order-2">
@@ -262,8 +246,8 @@ const App: React.FC = () => {
                                   categories={categories}
                                   setCategories={setCategories}
                                   allTransactions={rawData}
-                                  onDataChange={() => loadData(token)}
-                                  token={token}
+                                  onDataChange={() => loadData(apiKey)}
+                                  apiKey={apiKey}
                               />
                           </div>
                           <CategoryStats transactions={filteredTransactions} />
@@ -281,7 +265,7 @@ const App: React.FC = () => {
 
       <button
         onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 text-white rounded-2xl shadow-xl shadow-violet-300 flex items-center justify-center z-50 active:scale-95 transition-transform"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 text-white rounded-2xl shadow-xl shadow-violet-300 flex items-center justify-center z-50 active:scale-95 transition-transform hover:bg-violet-700"
       >
         <Plus className="w-8 h-8" />
       </button>
@@ -289,11 +273,11 @@ const App: React.FC = () => {
       <AddTransactionModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        onSuccess={() => loadData(token)}
+        onSuccess={() => loadData(apiKey)}
         accounts={accounts}
         categories={categories}
         initialData={editingTransaction}
-        token={token}
+        apiKey={apiKey}
       />
     </div>
   );

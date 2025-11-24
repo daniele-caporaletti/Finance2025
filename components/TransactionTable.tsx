@@ -8,10 +8,10 @@ interface TransactionTableProps {
   transactions: Transaction[];
   onDelete: (id: number) => Promise<void>;
   onEdit: (transaction: Transaction) => void;
-  token: string | null;
+  apiKey: string | null;
 }
 
-export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, onDelete, onEdit, token }) => {
+export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, onDelete, onEdit, apiKey }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -56,7 +56,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
   };
 
   const handleConfirmDelete = async () => {
-    if (confirmDeleteId !== null && token) {
+    if (confirmDeleteId !== null && apiKey) {
       const id = confirmDeleteId;
       setConfirmDeleteId(null);
       setDeletingId(id);
