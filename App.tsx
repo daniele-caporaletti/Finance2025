@@ -223,11 +223,12 @@ const App: React.FC = () => {
     <div className="min-h-screen pb-28 md:pb-10">
       
       {/* --- HEADER GLASS --- */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
+      {/* Increased z-index to 60 to sit above Filters (z-30) */}
+      <header className="sticky top-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm">
         <div className="max-w-[1600px] mx-auto px-4 h-20 flex items-center justify-between">
           
           {/* Left: Logo & Install */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-3 text-slate-800">
                <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200">
                   <LayoutDashboard className="w-6 h-6" />
@@ -235,8 +236,13 @@ const App: React.FC = () => {
                <span className="font-bold text-xl tracking-tight hidden sm:block">Finance 2025</span>
             </div>
             {installPrompt && (
-                <button onClick={handleInstallClick} className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold hover:bg-emerald-100 transition-colors">
-                    <Download className="w-4 h-4" /> Installa App
+                <button 
+                  onClick={handleInstallClick} 
+                  className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-50 text-emerald-700 rounded-full text-[10px] sm:text-xs font-bold hover:bg-emerald-100 transition-colors animate-in fade-in zoom-in"
+                >
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4" /> 
+                    <span className="hidden sm:inline">Installa App</span>
+                    <span className="sm:hidden">Installa</span>
                 </button>
             )}
           </div>
@@ -253,7 +259,7 @@ const App: React.FC = () => {
                   className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${filters.periodType === 'YEAR' ? 'bg-white text-violet-700 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
                 >Anno</button>
              </div>
-             <div className="w-40 hidden md:block">
+             <div className="w-40 hidden md:block relative z-[100]">
                <CustomSelect
                   value={filters.periodType === 'YEAR' ? "" : filters.selectedMonth}
                   onChange={(val) => setFilters(prev => ({ ...prev, selectedMonth: parseInt(val, 10) }))}
@@ -269,7 +275,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-4">
             <button
                 onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
-                className="hidden md:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl font-bold shadow-xl shadow-slate-200 hover:shadow-2xl hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0 text-sm"
+                className="hidden md:flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 active:translate-y-0 text-sm"
             >
                 <Plus className="w-5 h-5" /> Nuovo Movimento
             </button>
@@ -281,7 +287,7 @@ const App: React.FC = () => {
         
         {/* Mobile Month Selector (Sub-header) */}
         {filters.periodType === 'MONTH' && (
-            <div className="md:hidden px-4 pb-4 pt-2 bg-white/80 backdrop-blur-xl border-b border-slate-100">
+            <div className="md:hidden px-4 pb-4 pt-2 bg-white/80 backdrop-blur-xl border-b border-slate-100 relative z-30">
                 <CustomSelect
                   value={filters.selectedMonth}
                   onChange={(val) => setFilters(prev => ({ ...prev, selectedMonth: parseInt(val, 10) }))}
@@ -435,51 +441,56 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* --- MOBILE BOTTOM NAV --- */}
+      {/* --- MOBILE BOTTOM NAV (GRID LAYOUT) --- */}
       {!activeView && (
-      <nav className="xl:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe z-50 px-6 py-3 flex justify-between items-center shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-          <button 
-            onClick={() => setMobileTab('HOME')}
-            className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'HOME' ? 'text-violet-600' : 'text-slate-400'}`}
-          >
-             <Home className={`w-6 h-6 ${mobileTab === 'HOME' ? 'fill-violet-100' : ''}`} />
-             <span className="text-[10px] font-bold">Home</span>
-          </button>
+      <nav className="xl:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-xl border-t border-slate-200 pb-safe z-50 px-4 py-2 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] h-20">
+          <div className="grid grid-cols-5 h-full items-center">
+              {/* 1. Home */}
+              <button 
+                onClick={() => setMobileTab('HOME')}
+                className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'HOME' ? 'text-violet-600' : 'text-slate-400'}`}
+              >
+                 <Home className={`w-6 h-6 ${mobileTab === 'HOME' ? 'fill-violet-100' : ''}`} />
+                 <span className="text-[10px] font-bold">Home</span>
+              </button>
 
-          <button 
-            onClick={() => setMobileTab('ANALYTICS')}
-            className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'ANALYTICS' ? 'text-violet-600' : 'text-slate-400'}`}
-          >
-             <PieChart className={`w-6 h-6 ${mobileTab === 'ANALYTICS' ? 'fill-violet-100' : ''}`} />
-             <span className="text-[10px] font-bold">Analisi</span>
-          </button>
+              {/* 2. Analytics */}
+              <button 
+                onClick={() => setMobileTab('ANALYTICS')}
+                className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'ANALYTICS' ? 'text-violet-600' : 'text-slate-400'}`}
+              >
+                 <PieChart className={`w-6 h-6 ${mobileTab === 'ANALYTICS' ? 'fill-violet-100' : ''}`} />
+                 <span className="text-[10px] font-bold">Analisi</span>
+              </button>
 
-          {/* Floating FAB in center */}
-          <div className="relative -top-6">
-             <button
-                onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
-                className="w-16 h-16 bg-slate-900 rounded-2xl shadow-xl shadow-slate-300 flex items-center justify-center text-white active:scale-95 transition-transform border-4 border-white/50 backdrop-blur-sm"
-             >
-                <Plus className="w-8 h-8" />
-             </button>
+              {/* 3. FAB (Centered in Grid) */}
+              <div className="flex items-center justify-center -mt-1">
+                 <button
+                    onClick={() => { setEditingTransaction(null); setIsModalOpen(true); }}
+                    className="w-14 h-14 bg-slate-900 rounded-2xl shadow-xl shadow-slate-200 flex items-center justify-center text-white active:scale-95 transition-transform border-4 border-white"
+                 >
+                    <Plus className="w-7 h-7" />
+                 </button>
+              </div>
+
+              {/* 4. Management */}
+              <button 
+                onClick={() => setMobileTab('MANAGEMENT')}
+                className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'MANAGEMENT' ? 'text-violet-600' : 'text-slate-400'}`}
+              >
+                 <Wallet className={`w-6 h-6 ${mobileTab === 'MANAGEMENT' ? 'fill-violet-100' : ''}`} />
+                 <span className="text-[10px] font-bold">Gestione</span>
+              </button>
+
+              {/* 5. Logout */}
+              <button 
+                onClick={handleLogout}
+                className="flex flex-col items-center gap-1 text-slate-300 hover:text-rose-500 transition-colors"
+              >
+                 <Settings className="w-6 h-6" />
+                 <span className="text-[10px] font-bold">Logout</span>
+              </button>
           </div>
-
-          <button 
-            onClick={() => setMobileTab('MANAGEMENT')}
-            className={`flex flex-col items-center gap-1 transition-colors ${mobileTab === 'MANAGEMENT' ? 'text-violet-600' : 'text-slate-400'}`}
-          >
-             <Wallet className={`w-6 h-6 ${mobileTab === 'MANAGEMENT' ? 'fill-violet-100' : ''}`} />
-             <span className="text-[10px] font-bold">Gestione</span>
-          </button>
-
-          {/* Mobile Logout/Setup */}
-          <button 
-            onClick={handleLogout}
-            className="flex flex-col items-center gap-1 text-slate-300 hover:text-rose-500 transition-colors"
-          >
-             <Settings className="w-6 h-6" />
-             <span className="text-[10px] font-bold">Logout</span>
-          </button>
       </nav>
       )}
 

@@ -131,7 +131,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
         for (const [accName, balanceStr] of Object.entries(initBalances)) {
             const balance = parseFloat(balanceStr);
             if (!isNaN(balance) && balance !== 0) {
-                const curr = accounts.find(a => a[0] === accName)?.[1] || 'CHF';
+                const curr = (accounts.find(a => a[0] === accName)?.[1] || 'CHF') as string;
                 // Calc CHF value
                 let valChf = balance;
                 if (curr !== 'CHF') {
@@ -240,7 +240,8 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
         {/* --- CATEGORIES TAB --- */}
         {activeTab === 'CATEGORIES' && (
              <div className="space-y-2 pb-10">
-                 {Object.entries(categories).sort().map(([catName, subs]) => {
+                 {Object.entries(categories).sort().map(([catName, rawSubs]) => {
+                     const subs = rawSubs as string[];
                      const isExpanded = expandedCat === catName;
                      const isAddingSub = addingSubTo === catName;
 
@@ -336,7 +337,7 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
 
     {/* --- INIT MODAL --- */}
     {showInitModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95">
                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                     <h3 className="font-bold text-slate-800">Inizializza Saldi</h3>
@@ -378,24 +379,24 @@ export const ManagementPanel: React.FC<ManagementPanelProps> = ({
 
     {/* --- CONFIRM / ALERT MODALS --- */}
     {confirmModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
                 <h4 className="text-lg font-bold text-slate-800 mb-2">{confirmModal.title}</h4>
-                <p className="text-sm text-slate-500 mb-6">{confirmModal.msg}</p>
+                <p className="text-sm text-slate-500 mb-6 font-medium">{confirmModal.msg}</p>
                 <div className="flex gap-3 justify-center">
-                    <button onClick={() => setConfirmModal(null)} className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200">Annulla</button>
-                    <button onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }} className="px-5 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-lg shadow-rose-200">Conferma</button>
+                    <button onClick={() => setConfirmModal(null)} className="flex-1 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors">Annulla</button>
+                    <button onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }} className="flex-1 px-5 py-3 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all">Conferma</button>
                 </div>
             </div>
         </div>
     )}
 
     {alertMsg && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
                 <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-600"><Info className="w-6 h-6"/></div>
                 <p className="text-sm font-medium text-slate-600 mb-6">{alertMsg}</p>
-                <button onClick={() => setAlertMsg(null)} className="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm">Ho capito</button>
+                <button onClick={() => setAlertMsg(null)} className="w-full px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors">Ho capito</button>
             </div>
         </div>
     )}

@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Transaction } from '../types';
 import { format } from 'date-fns';
-import { Search, Tag, Briefcase, ArrowLeftRight, Trash2, Pencil } from 'lucide-react';
+import { Search, Tag, Briefcase, ArrowLeftRight, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 import { getCategoryColor, getCategoryIcon } from './CategoryIcons';
 
 interface TransactionTableProps {
@@ -14,7 +15,8 @@ interface TransactionTableProps {
 export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, onDelete, onEdit, apiKey }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null); // ID being processed via API
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null); // ID waiting for confirmation
   
   const itemsPerPage = 20;
 
@@ -35,8 +37,18 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
   const formatCurrency = (amount: number, currency: string) => 
     new Intl.NumberFormat('de-CH', { style: 'currency', currency: currency }).format(amount);
 
+  const confirmDelete = async () => {
+    if (confirmDeleteId !== null) {
+        setDeletingId(confirmDeleteId);
+        setConfirmDeleteId(null); // Close modal
+        await onDelete(confirmDeleteId);
+        setDeletingId(null);
+    }
+  };
+
   return (
-    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/20 overflow-hidden flex flex-col h-full">
+    <>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/20 overflow-hidden flex flex-col h-full relative z-0">
       {/* Header */}
       <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100/50">
         <h3 className="text-lg font-bold text-slate-800">Ultimi Movimenti</h3>
@@ -114,7 +126,11 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
                     <button onClick={() => onEdit(t)} className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-xl transition-all">
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button onClick={() => { if(confirm('Eliminare?')) onDelete(t.id); }} disabled={deletingId === t.id} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
+                    <button 
+                        onClick={() => setConfirmDeleteId(t.id)} 
+                        disabled={deletingId === t.id} 
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all disabled:opacity-50"
+                    >
                       {deletingId === t.id ? <div className="w-4 h-4 border-2 border-rose-600 rounded-full animate-spin"/> : <Trash2 className="w-4 h-4" />}
                     </button>
                   </div>
@@ -134,5 +150,33 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({ transactions
         </div>
       )}
     </div>
+
+    {/* DELETE CONFIRMATION MODAL */}
+    {confirmDeleteId !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center animate-in zoom-in-95">
+                <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-600">
+                    <AlertTriangle className="w-7 h-7"/>
+                </div>
+                <h4 className="text-lg font-bold text-slate-800 mb-2">Elimina Movimento</h4>
+                <p className="text-sm text-slate-500 mb-6 font-medium">Sei sicuro di voler eliminare definitivamente questo movimento?</p>
+                <div className="flex gap-3 justify-center">
+                    <button 
+                        onClick={() => setConfirmDeleteId(null)} 
+                        className="flex-1 px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors"
+                    >
+                        Annulla
+                    </button>
+                    <button 
+                        onClick={confirmDelete} 
+                        className="flex-1 px-5 py-3 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all"
+                    >
+                        Elimina
+                    </button>
+                </div>
+            </div>
+        </div>
+    )}
+    </>
   );
 };

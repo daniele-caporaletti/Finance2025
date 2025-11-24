@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Save, ArrowRightLeft, CreditCard, Pencil, Tag, FileText } from 'lucide-react';
 import { AccountTuple, CreateTransactionPayload, Transaction, UpdateTransactionPayload } from '../types';
@@ -226,7 +227,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({ isOpen
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
